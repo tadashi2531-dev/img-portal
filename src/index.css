@@ -312,6 +312,9 @@ a { color: var(--yellow); }
 .photo-grid img { width: 100%; height: auto; border-radius: 8px; display: block; background: #000; }
 .photo-missing { min-height: 120px; display: grid; place-items: center; color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+a.btn { text-decoration: none; }
+.chart { width: 100%; height: auto; background: #111; border-radius: 12px; }
+.weather-alert { margin: 0; color: #111; background: #facc15; border-radius: 8px; padding: 8px 10px; font-weight: 800; }
 label.btn { position: relative; }
 @media (min-width: 720px) {
   .photo-grid { grid-template-columns: 1fr 1fr; }

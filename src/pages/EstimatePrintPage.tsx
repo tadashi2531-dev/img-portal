@@ -49,7 +49,7 @@ export function EstimatePrintPage() {
           印刷 / PDFに保存
         </button>
       </div>
-      <p className="fine no-print">ブラウザの印刷で「PDFに保存」を選べます。この画面からメールは送信しません。</p>
+      <p className="fine no-print">ブラウザの印刷で「PDFに保存」を選べます。メールは編集画面の下書きから送ります。</p>
       <article className="sheet">
         <h1 className="doc-title">御見積書</h1>
         <div className="doc-meta">

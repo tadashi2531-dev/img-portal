@@ -29,7 +29,7 @@ export function InvoicesPage() {
     <div className="stack">
       <div>
         <h1>請求発行</h1>
-        <p className="lead">見積から請求の下書きを作ります。メールは下書きだけで、この画面からは送信しません。</p>
+        <p className="lead">見積から請求の下書きを作ります。メールは下書きを確認し、送信ボタンを押したときだけ送ります。</p>
       </div>
       {error ? <Banner tone="error">{error}</Banner> : null}
       <section className="card stack">

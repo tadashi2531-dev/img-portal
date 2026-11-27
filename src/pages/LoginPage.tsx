@@ -76,7 +76,7 @@ export function LoginPage() {
             {submitting ? "ログイン中…" : "ログイン"}
           </button>
         </form>
-        <p className="fine">見積メールはこのポータルから送信しません。下書きを担当者が確認してから出します。</p>
+        <p className="fine">見積や請求のメールは、下書きを確認して送信ボタンを押したときだけ送ります。</p>
       </main>
     </div>
   );

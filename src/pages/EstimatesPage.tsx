@@ -79,7 +79,7 @@ export function EstimatesPage() {
         <div>
           <h1>見積</h1>
           <p className="lead">
-            過去の見積りをベースに下書きを作り、品名・数量・単価は手で直せます。メールは下書きを担当者が確認してから送ります。この画面からメールは送信しません。
+            過去の見積りをベースに下書きを作り、品名・数量・単価は手で直せます。メールは下書きを確認し、送信ボタンを押したときだけ送ります。
           </p>
         </div>
         <button type="button" className="btn" onClick={() => navigate("/estimates/new")}>
