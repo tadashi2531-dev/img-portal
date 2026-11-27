@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -15,10 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,7 +38,7 @@ jobs:
         uses: actions/configure-pages@v6
         with:
           # Pages が未設定なら有効化を試みる。
-          # 公式仕様では GITHUB_TOKEN 以外のトークンが必要で、
+          # 公式仕様では GITHUB_TOKEN 以外のトークンが必要なことがあり、
           # 失敗した場合は Settings > Pages > Source を GitHub Actions にする。
           enablement: true
 
@@ -49,6 +47,15 @@ jobs:
         with:
           path: ./dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # 同じジョブ内でアップロードした成果物は、そのジョブの完了前には
+      # deploy-pages から見えない。ビルドと公開は別ジョブにする。
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
