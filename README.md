@@ -63,20 +63,16 @@ npm run build
 
 ## デプロイ
 
-`main` への push で GitHub Actions（`.github/workflows/pages.yml`）が動きます。
+`main` への push で GitHub Actions（`.github/workflows/pages.yml`）が動きます。ビルドと公開は別のジョブです。同じジョブで成果物を上げてすぐ公開すると、公開側から成果物が見えず失敗します。
 
-1. `npm ci` と `npm run build`
-2. `actions/configure-pages`（`enablement: true` で Pages の有効化を試みる）
-3. `actions/upload-pages-artifact`
-4. `actions/deploy-pages`
+1. ビルド: `npm ci`、`npm run build`、`actions/configure-pages`（`enablement: true`）、`actions/upload-pages-artifact`
+2. 公開: `actions/deploy-pages`
 
 画面のアドレスはハッシュ（`#/estimates`）なので、GitHub Pages でも見積の画面を開き直せます。
 
-### Pages を有効にすること
+### Pages の Source
 
-`configure-pages` の `enablement: true` は、公式の説明どおり **GITHUB_TOKEN 以外のトークン** がないと Pages を新規に有効化できません。このワークフローはリポジトリの `GITHUB_TOKEN` だけを使います。
-
-そのため、初回はワークフローが Pages の作成に失敗することがあります。そのときはリポジトリの **Settings > Pages > Build and deployment > Source** を **GitHub Actions** にしてください。一度 Source を GitHub Actions にすると、以降の push でこのワークフローが公開を更新します。
+公開の仕組みは GitHub Actions です。Source が GitHub Actions でないときは、**Settings > Pages > Build and deployment > Source** を **GitHub Actions** にしてください。`enablement: true` は未設定の Pages を有効化しようとします。トークンの権限でそれが失敗したときも、同じ設定に切り替えてから Actions を再実行します。
 
 Actions の画面で `github-pages` 環境の承認待ちになっていたら、承認してください。
 
