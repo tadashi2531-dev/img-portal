@@ -47,7 +47,7 @@ export function JobsPage() {
     <div className="stack">
       <div>
         <h1>現場・案件</h1>
-        <p className="lead">案件の予定・実行・完了と、日別の工程（作業内容、塗料、担当、時間）を残します。天候の自動取得はありません。</p>
+        <p className="lead">案件の予定・実行・完了と、日別の工程（作業内容、塗料、担当、時間）を残します。住所から天気を取り、雨と強風は工程に出します。</p>
       </div>
       {error ? <Banner tone="error">{error}</Banner> : null}
       <form

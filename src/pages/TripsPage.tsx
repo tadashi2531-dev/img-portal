@@ -4,6 +4,7 @@ import { FictionNote } from "../components/FictionNote.tsx";
 import { Banner } from "../components/ui.tsx";
 import { toMessage } from "../lib/errors.ts";
 import { formatDateJa } from "../lib/money.ts";
+import { hotelSearchLinks } from "../lib/hotelLinks.ts";
 import { createTrip, deleteTrip, getTrip, listJobs, listTrips, saveTrip, setReview } from "../lib/portalApi.ts";
 import type { TripCheck, TripDetail } from "../lib/portalTypes.ts";
 
@@ -73,7 +74,7 @@ function TripList() {
 function TripEditor({ id }: { id: string }) {
   const navigate = useNavigate();
   const [trip, setTrip] = useState<TripDetail | null>(null);
-  const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
+  const [jobs, setJobs] = useState<{ id: string; title: string; address: string }[]>([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -109,7 +110,14 @@ function TripEditor({ id }: { id: string }) {
         </label>
         <label className="field">
           <span>案件</span>
-          <select value={trip.jobId ?? ""} onChange={(event) => patch({ jobId: event.target.value || null })}>
+          <select
+            value={trip.jobId ?? ""}
+            onChange={(event) => {
+              const jobId = event.target.value || null;
+              const job = jobs.find((item) => item.id === jobId);
+              patch({ jobId, siteAddress: trip.siteAddress || job?.address || "" });
+            }}
+          >
             <option value="">未選択</option>
             {jobs.map((job) => (
               <option key={job.id} value={job.id}>
@@ -128,10 +136,45 @@ function TripEditor({ id }: { id: string }) {
             <input type="date" value={trip.returnOn ?? ""} onChange={(event) => patch({ returnOn: event.target.value || null })} />
           </label>
         </div>
-        <label className="field">
-          <span>宿のメモ</span>
-          <input value={trip.lodging} onChange={(event) => patch({ lodging: event.target.value })} />
-        </label>
+        <div className="grid-2">
+          <label className="field">
+            <span>人数</span>
+            <input inputMode="numeric" value={String(trip.partySize)} onChange={(event) => patch({ partySize: Number(event.target.value) || 1 })} />
+          </label>
+          <label className="field">
+            <span>現場の住所</span>
+            <input value={trip.siteAddress} onChange={(event) => patch({ siteAddress: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>チェックイン</span>
+            <input type="date" value={trip.checkIn ?? ""} onChange={(event) => patch({ checkIn: event.target.value || null })} />
+          </label>
+          <label className="field">
+            <span>チェックアウト</span>
+            <input type="date" value={trip.checkOut ?? ""} onChange={(event) => patch({ checkOut: event.target.value || null })} />
+          </label>
+        </div>
+        <HotelLinks address={trip.siteAddress} checkIn={trip.checkIn} checkOut={trip.checkOut} partySize={trip.partySize} />
+        <h2>予約した宿の記録</h2>
+        <p className="fine">予約サイトで取った内容をここに残します。この画面自体は予約しません。</p>
+        <div className="grid-2">
+          <label className="field">
+            <span>ホテル名</span>
+            <input value={trip.hotelName} onChange={(event) => patch({ hotelName: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>予約番号</span>
+            <input value={trip.reservationNo} onChange={(event) => patch({ reservationNo: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>料金（円）</span>
+            <input inputMode="numeric" value={trip.lodgingPrice} onChange={(event) => patch({ lodgingPrice: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>宿のメモ</span>
+            <input value={trip.lodging} onChange={(event) => patch({ lodging: event.target.value })} />
+          </label>
+        </div>
         <label className="field">
           <span>移動メモ</span>
           <textarea rows={3} value={trip.travelNotes} onChange={(event) => patch({ travelNotes: event.target.value })} />
@@ -172,7 +215,7 @@ function TripEditor({ id }: { id: string }) {
           項目を追加
         </button>
       </section>
-      <p className="mail-warning">宿泊や移動の手配は送信しません。確認待ちは担当者のメモです。</p>
+      <p className="mail-warning">予約サイトが開くだけで、この画面は予約しません。確認待ちは担当者のメモです。</p>
       <div className="row-actions">
         <button
           className="btn"
@@ -212,6 +255,33 @@ function TripEditor({ id }: { id: string }) {
           削除
         </button>
       </div>
+    </div>
+  );
+}
+
+function HotelLinks({
+  address,
+  checkIn,
+  checkOut,
+  partySize,
+}: {
+  address: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  partySize: number;
+}) {
+  const links = hotelSearchLinks({ address, checkIn, checkOut, partySize });
+  return (
+    <div className="row-actions">
+      <a className="btn quiet" href={links.rakuten} target="_blank" rel="noopener noreferrer">
+        楽天トラベルで探す
+      </a>
+      <a className="btn quiet" href={links.jalan} target="_blank" rel="noopener noreferrer">
+        じゃらんで探す
+      </a>
+      <a className="btn quiet" href={links.google} target="_blank" rel="noopener noreferrer">
+        Googleホテルで探す
+      </a>
     </div>
   );
 }

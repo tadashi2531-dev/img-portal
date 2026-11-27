@@ -32,6 +32,15 @@ function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function optionalNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function textOrNull(value: string): string | null {
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
@@ -74,17 +83,18 @@ async function syncChildRows(
 }
 
 export async function listJobs(): Promise<
-  { id: string; title: string; siteName: string; phase: JobPhase; startDate: string | null; endDate: string | null; progress: number; customerName: string }[]
+  { id: string; title: string; siteName: string; address: string; phase: JobPhase; startDate: string | null; endDate: string | null; progress: number; customerName: string }[]
 > {
   const { data, error } = await supabase
     .from("jobs")
-    .select("id, title, site_name, phase, start_date, end_date, progress, customers(name)")
+    .select("id, title, site_name, address, phase, start_date, end_date, progress, customers(name)")
     .order("start_date", { ascending: false, nullsFirst: false });
   if (error) throw error;
   return ((data ?? []) as Raw[]).map((row) => ({
     id: text(row.id),
     title: text(row.title),
     siteName: text(row.site_name),
+    address: text(row.address),
     phase: isJobPhase(row.phase) ? row.phase : "plan",
     startDate: text(row.start_date) || null,
     endDate: text(row.end_date) || null,
@@ -132,6 +142,8 @@ export async function getJob(id: string): Promise<JobDetail | null> {
     title: text(row.title),
     siteName: text(row.site_name),
     address: text(row.address),
+    latitude: optionalNumber(row.latitude),
+    longitude: optionalNumber(row.longitude),
     phase: isJobPhase(row.phase) ? row.phase : "plan",
     startDate: text(row.start_date) || null,
     endDate: text(row.end_date) || null,
@@ -159,6 +171,8 @@ export async function saveJob(input: {
   title: string;
   siteName: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   phase: JobPhase;
   startDate: string | null;
   endDate: string | null;
@@ -176,6 +190,8 @@ export async function saveJob(input: {
       title: input.title.trim(),
       site_name: textOrNull(input.siteName),
       address: textOrNull(input.address),
+      latitude: input.latitude,
+      longitude: input.longitude,
       phase: input.phase,
       start_date: input.startDate,
       end_date: input.endDate,
@@ -255,6 +271,13 @@ export async function getTrip(id: string): Promise<TripDetail | null> {
     lodging: text(row.lodging),
     travelNotes: text(row.travel_notes),
     notes: text(row.notes),
+    partySize: Math.max(1, asNumber(row.party_size) || 1),
+    siteAddress: text(row.site_address),
+    hotelName: text(row.hotel_name),
+    reservationNo: text(row.reservation_no),
+    lodgingPrice: row.lodging_price == null ? "" : String(asNumber(row.lodging_price)),
+    checkIn: text(row.check_in) || null,
+    checkOut: text(row.check_out) || null,
     awaitingConfirmation: row.awaiting_confirmation === true,
     checks,
   };
@@ -279,6 +302,13 @@ export async function saveTrip(input: TripDetail): Promise<void> {
       lodging: textOrNull(input.lodging),
       travel_notes: textOrNull(input.travelNotes),
       notes: textOrNull(input.notes),
+      party_size: Math.max(1, Math.min(30, Math.round(input.partySize || 1))),
+      site_address: textOrNull(input.siteAddress),
+      hotel_name: textOrNull(input.hotelName),
+      reservation_no: textOrNull(input.reservationNo),
+      lodging_price: input.lodgingPrice.trim() ? Math.max(0, Math.round(asNumber(input.lodgingPrice))) : null,
+      check_in: input.checkIn,
+      check_out: input.checkOut,
     })
     .eq("id", input.id);
   if (error) throw error;
@@ -697,6 +727,60 @@ export async function salesRows(): Promise<
   });
 }
 
+export type OutboundMessage = {
+  id: string;
+  toEmail: string;
+  status: "sent" | "failed" | "not_configured";
+  hasAttachment: boolean;
+  createdAt: string;
+};
+
+export async function listOutboundMessages(kind: string, refId: string): Promise<OutboundMessage[]> {
+  const { data, error } = await supabase
+    .from("outbound_messages")
+    .select("id, to_email, status, has_attachment, created_at")
+    .eq("kind", kind)
+    .eq("ref_id", refId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    toEmail: text(row.to_email),
+    status: row.status === "sent" || row.status === "failed" || row.status === "not_configured" ? row.status : "failed",
+    hasAttachment: row.has_attachment === true,
+    createdAt: text(row.created_at),
+  }));
+}
+
+export type SalesPoint = { date: string; jobId: string; jobTitle: string; revenue: number; cost: number };
+
+export async function salesPoints(): Promise<SalesPoint[]> {
+  const [invoices, costs, jobs] = await Promise.all([
+    supabase.from("invoices").select("job_id, status, total, issue_date"),
+    supabase.from("job_costs").select("job_id, amount, cost_date"),
+    supabase.from("jobs").select("id, title"),
+  ]);
+  if (invoices.error) throw invoices.error;
+  if (costs.error) throw costs.error;
+  if (jobs.error) throw jobs.error;
+  const titles = new Map(((jobs.data ?? []) as Raw[]).map((row) => [text(row.id), text(row.title)]));
+  const points: SalesPoint[] = [];
+  for (const row of (invoices.data ?? []) as Raw[]) {
+    if (row.status !== "sent" && row.status !== "paid") continue;
+    const date = text(row.issue_date);
+    if (!date) continue;
+    const jobId = text(row.job_id);
+    points.push({ date, jobId, jobTitle: titles.get(jobId) || "案件未設定", revenue: asNumber(row.total), cost: 0 });
+  }
+  for (const row of (costs.data ?? []) as Raw[]) {
+    const date = text(row.cost_date);
+    if (!date) continue;
+    const jobId = text(row.job_id);
+    points.push({ date, jobId, jobTitle: titles.get(jobId) || "案件未設定", revenue: 0, cost: asNumber(row.amount) });
+  }
+  return points;
+}
+
 export async function listEstimateChoices(): Promise<{ id: string; label: string }[]> {
   const { data, error } = await supabase.from("estimates").select("id, estimate_no, title").order("created_at", { ascending: false });
   if (error) throw error;
@@ -739,7 +823,9 @@ export async function seedFiction(): Promise<void> {
       customer_id: customerId,
       title: "架空）外壁塗装工事",
       site_name: "架空）山田邸",
-      address: "架空の現場",
+      address: "横浜市中区（架空）",
+      latitude: 35.4478,
+      longitude: 139.6425,
       phase: "active",
       start_date: todayISO(),
       end_date: todayISO(new Date(Date.now() + 2 * 86400000)),
@@ -755,7 +841,10 @@ export async function seedFiction(): Promise<void> {
     { job_id: jobId, work_date: todayISO(new Date(Date.now() + 86400000)), work_content: "架空）上塗り1回目", paint: "架空）シリコン", assignee: "架空）佐藤", hours: 7, sort: 1 },
   ]);
   if (dayError) throw dayError;
-  const { error: costError } = await supabase.from("job_costs").insert({ job_id: jobId, category: "材料", label: "架空）塗料", amount: 80000, cost_date: todayISO(), sort: 0 });
+  const { error: costError } = await supabase.from("job_costs").insert([
+    { job_id: jobId, category: "材料", label: "架空）塗料", amount: 80000, cost_date: todayISO(), sort: 0 },
+    { job_id: jobId, category: "交通", label: "架空）交通費", amount: 8400, cost_date: todayISO(new Date(Date.now() - 8 * 86400000)), sort: 1 },
+  ]);
   if (costError) throw costError;
   const { data: trip, error: tripError } = await supabase
     .from("trips")
@@ -765,7 +854,12 @@ export async function seedFiction(): Promise<void> {
       depart_on: todayISO(),
       return_on: todayISO(new Date(Date.now() + 2 * 86400000)),
       lodging: "架空）ホテル見本",
-      travel_notes: "架空）社用車。この画面は手配しない",
+      site_address: "横浜市中区（架空）",
+      party_size: 2,
+      check_in: todayISO(),
+      check_out: todayISO(new Date(Date.now() + 2 * 86400000)),
+      hotel_name: "",
+      travel_notes: "架空）社用車。予約サイトを開くだけで、この画面は予約しない",
       notes: FICTION_MARK,
       awaiting_confirmation: true,
     })

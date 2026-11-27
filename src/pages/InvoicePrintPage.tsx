@@ -35,7 +35,7 @@ export function InvoicePrintPage() {
           印刷 / PDFに保存
         </button>
       </div>
-      <p className="fine no-print">この画面からメールは送信しません。</p>
+      <p className="fine no-print">メールは編集画面の下書きから、確認したときだけ送ります。</p>
       <article className="sheet">
         <h1 className="doc-title">御請求書</h1>
         <div className="doc-meta">

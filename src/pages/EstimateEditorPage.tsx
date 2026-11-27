@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill.tsx";
+import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner, HazardStripe, SelectField, TextArea, TextField } from "../components/ui.tsx";
+import { renderDocumentPdf } from "../lib/documentPdf.ts";
 import { useUnsaved } from "../components/unsaved.tsx";
 import { duplicateEstimate, getEstimate, listCustomers, saveEstimate, suggestEstimateNo, type EstimateLineInput } from "../lib/api.ts";
 import { buildEstimateEmail } from "../lib/emailDraft.ts";
@@ -594,13 +596,42 @@ export function EstimateEditorPage() {
             <h2>メール下書き</h2>
             <span className="pill pill-sent">担当者の確認待ち</span>
           </div>
-          <p className="mail-warning">送信は担当者が確認してから。この画面からは送信しません。</p>
-          <p className="fine">表示中の内容で下書きを作ります。保存前の変更も含みます。</p>
+          <p className="fine">表示中の内容で下書きを作ります。保存前の変更も含みます。見積書PDFを添付して送ります。</p>
           <TextField label="件名" value={mail.subject} readOnly onChange={() => undefined} />
           <label className="field">
             <span>本文</span>
             <textarea readOnly rows={16} value={mail.body} />
           </label>
+          <MailSendPanel
+            kind="estimate"
+            refId={id}
+            subject={mail.subject}
+            body={mail.body}
+            makeAttachment={() =>
+              renderDocumentPdf({
+                heading: "御見積書",
+                numberLabel: "見積番号",
+                number: form.estimateNo,
+                customer: customerName,
+                title: form.title,
+                site: form.siteName,
+                dateLabel: "発行日",
+                date: form.issueDate,
+                lines: preview.items.map((item) => ({
+                  name: item.itemName,
+                  spec: item.spec,
+                  qty: String(item.quantity),
+                  unit: item.unit,
+                  price: formatYen(item.unitPrice),
+                  amount: formatYen(lineAmount(item.quantity, item.unitPrice)),
+                })),
+                subtotal: formatYen(preview.totals.subtotal),
+                tax: formatYen(preview.totals.tax),
+                total: formatYen(preview.totals.total),
+                notes: form.notes,
+              }).then((bytes) => ({ filename: `${form.estimateNo || "estimate"}.pdf`, bytes }))
+            }
+          />
           <div className="row-actions">
             <button className="btn" type="button" onClick={() => void copyMail()}>
               件名と本文をコピー

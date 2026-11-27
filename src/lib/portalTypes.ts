@@ -77,6 +77,8 @@ export type JobDetail = {
   title: string;
   siteName: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   phase: JobPhase;
   startDate: string | null;
   endDate: string | null;
@@ -97,6 +99,13 @@ export type TripDetail = {
   lodging: string;
   travelNotes: string;
   notes: string;
+  partySize: number;
+  siteAddress: string;
+  hotelName: string;
+  reservationNo: string;
+  lodgingPrice: string;
+  checkIn: string | null;
+  checkOut: string | null;
   awaitingConfirmation: boolean;
   checks: TripCheck[];
 };

@@ -6,6 +6,7 @@ import { listCustomers } from "../lib/api.ts";
 import { toMessage } from "../lib/errors.ts";
 import { formatYen } from "../lib/money.ts";
 import { deleteJob, estimatesForJob, getJob, linkEstimate, listEstimateChoices, saveJob } from "../lib/portalApi.ts";
+import { fetchDailyWeather, geocodePlace, type DayWeather } from "../lib/weather.ts";
 import { COST_CATEGORIES, JOB_PHASES, PHASE_LABEL, type JobCost, type JobDay, type JobDetail, type JobPhase } from "../lib/portalTypes.ts";
 import type { Customer } from "../lib/types.ts";
 
@@ -20,6 +21,8 @@ export function JobDetailPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
+  const [weather, setWeather] = useState<DayWeather[]>([]);
+  const [weatherNote, setWeatherNote] = useState("");
 
   async function load() {
     const [detail, customerRows, estimateRows, allEstimates] = await Promise.all([
@@ -38,6 +41,38 @@ export function JobDetailPage() {
   useEffect(() => {
     void load().catch((caught: unknown) => setError(toMessage(caught)));
   }, [id]);
+
+  useEffect(() => {
+    if (!job) return;
+    let cancel = false;
+    void (async () => {
+      try {
+        let latitude = job.latitude;
+        let longitude = job.longitude;
+        if ((latitude == null || longitude == null) && job.address.trim()) {
+          const place = await geocodePlace(job.address);
+          if (!place || cancel) {
+            if (!cancel && !place) setWeatherNote("住所から場所を特定できません。緯度・経度を入力してください。予報は16日先までです。");
+            return;
+          }
+          latitude = place.latitude;
+          longitude = place.longitude;
+          setJob((current) => (current ? { ...current, latitude, longitude } : current));
+        }
+        if (latitude == null || longitude == null || cancel) return;
+        const days = await fetchDailyWeather(latitude, longitude);
+        if (!cancel) {
+          setWeather(days);
+          setWeatherNote("Open-Meteo の予報です。雨や強風の日は塗装・防水の作業に注意してください。16日先までです。");
+        }
+      } catch (caught) {
+        if (!cancel) setWeatherNote(toMessage(caught));
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [job?.id, job?.address, job?.latitude, job?.longitude]);
 
   if (!job) return error ? <Banner tone="error">{error}</Banner> : <p className="fine">読み込み中…</p>;
 
@@ -117,7 +152,25 @@ export function JobDetailPage() {
         <div className="track">
           <div style={{ width: `${job.progress}%` }} />
         </div>
-        <p className="fine">天候の自動取得と音声報告はまだありません。日程と作業は手で記録します。</p>
+        <div className="grid-2">
+          <label className="field">
+            <span>緯度</span>
+            <input
+              inputMode="decimal"
+              value={job.latitude ?? ""}
+              onChange={(event) => patch({ latitude: event.target.value === "" ? null : Number(event.target.value) })}
+            />
+          </label>
+          <label className="field">
+            <span>経度</span>
+            <input
+              inputMode="decimal"
+              value={job.longitude ?? ""}
+              onChange={(event) => patch({ longitude: event.target.value === "" ? null : Number(event.target.value) })}
+            />
+          </label>
+        </div>
+        <p className="fine">{weatherNote || "住所か緯度経度があると、工程の日に天気を出します。音声報告はまだありません。"}</p>
         <label className="field">
           <span>メモ</span>
           <textarea rows={3} value={job.notes} onChange={(event) => patch({ notes: event.target.value })} />
@@ -149,6 +202,7 @@ export function JobDetailPage() {
                 <input value={day.assignee} onChange={(event) => patchDay(index, { assignee: event.target.value })} />
               </label>
             </div>
+            {day.workDate ? <WeatherLine weather={weather.find((item) => item.date === day.workDate)} /> : null}
             <button className="btn danger" type="button" onClick={() => patch({ days: job.days.filter((item) => item.key !== day.key) })}>
               この日を削除
             </button>
@@ -264,4 +318,15 @@ export function JobDetailPage() {
     if (!job) return;
     patch({ costs: job.costs.map((cost, costIndex) => (costIndex === index ? { ...cost, ...partial } : cost)) });
   }
+}
+
+function WeatherLine({ weather }: { weather: DayWeather | undefined }) {
+  if (!weather) return <p className="fine">この日の予報はまだありません（16日先まで）。</p>;
+  const alerts = [weather.rainWarning ? "雨の注意" : "", weather.windWarning ? "強風の注意" : ""].filter(Boolean);
+  return (
+    <p className={alerts.length > 0 ? "weather-alert" : "fine"}>
+      {weather.label} {weather.tempMin ?? "—"}〜{weather.tempMax ?? "—"}℃ ／ 降水 {weather.precipProbability ?? "—"}% ／ 風 {weather.windSpeed ?? "—"}m/s
+      {alerts.length > 0 ? ` ／ ${alerts.join("・")}` : ""}
+    </p>
+  );
 }

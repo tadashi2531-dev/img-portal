@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FictionNote } from "../components/FictionNote.tsx";
+import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner } from "../components/ui.tsx";
+import { renderDocumentPdf } from "../lib/documentPdf.ts";
 import { listCustomers } from "../lib/api.ts";
 import { buildInvoiceEmail } from "../lib/emailDraft.ts";
 import { toMessage } from "../lib/errors.ts";
@@ -122,7 +124,7 @@ export function InvoiceEditorPage() {
       </button>
       <FictionNote text={`${invoice.invoiceNo}${invoice.title}`} />
       <h1>請求を編集</h1>
-      <p className="mail-warning">送信は担当者が確認してから。この画面からは送信しません。</p>
+      <p className="fine">メールは下書きを開いて確認し、送信ボタンを押したときだけ送ります。</p>
       {error ? <Banner tone="error">{error}</Banner> : null}
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
       <section className="card stack">
@@ -279,7 +281,6 @@ export function InvoiceEditorPage() {
       {mailOpen ? (
         <section className="card mail-card stack">
           <h2>メール下書き</h2>
-          <p className="mail-warning">送信は担当者が確認してから。この画面からは送信しません。</p>
           <label className="field">
             <span>件名</span>
             <input readOnly value={mail.subject} />
@@ -288,6 +289,36 @@ export function InvoiceEditorPage() {
             <span>本文</span>
             <textarea readOnly rows={14} value={mail.body} />
           </label>
+          <MailSendPanel
+            kind="invoice"
+            refId={invoice.id}
+            subject={mail.subject}
+            body={mail.body}
+            makeAttachment={() =>
+              renderDocumentPdf({
+                heading: "御請求書",
+                numberLabel: "請求番号",
+                number: invoice.invoiceNo,
+                customer: customerName,
+                title: invoice.title,
+                site: invoice.siteName,
+                dateLabel: "発行日",
+                date: invoice.issueDate ?? "",
+                lines: preview.lines.map((line) => ({
+                  name: line.itemName,
+                  spec: line.spec,
+                  qty: String(line.quantity),
+                  unit: line.unit,
+                  price: formatYen(line.unitPrice),
+                  amount: formatYen(lineAmount(line.quantity, line.unitPrice)),
+                })),
+                subtotal: formatYen(preview.totals.subtotal),
+                tax: formatYen(preview.totals.tax),
+                total: formatYen(preview.totals.total),
+                notes: invoice.notes,
+              }).then((bytes) => ({ filename: `${invoice.invoiceNo || "invoice"}.pdf`, bytes }))
+            }
+          />
           <button
             className="btn"
             type="button"

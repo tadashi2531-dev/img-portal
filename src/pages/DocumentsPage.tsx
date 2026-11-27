@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FictionNote } from "../components/FictionNote.tsx";
+import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner } from "../components/ui.tsx";
 import { listCustomers } from "../lib/api.ts";
 import { toMessage } from "../lib/errors.ts";
@@ -114,6 +115,16 @@ export function DocumentsPage() {
           <span>備考</span>
           <textarea rows={2} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
         </label>
+        {form.id ? (
+          <MailSendPanel
+            kind="document"
+            refId={form.id}
+            subject={`書類のご送付（${form.title || "書類"}）`}
+            body={[`${form.title}`, `種類：${form.docKind}`, `期限：${form.dueOn || "未設定"}`, form.notes || "", "", "IMG株式会社"].join("\n")}
+          />
+        ) : (
+          <p className="fine">保存した書類から、下書きを確認して送信できます。</p>
+        )}
         <div className="row-actions">
           <button className="btn" type="submit">
             {form.id ? "更新する" : "追加する"}

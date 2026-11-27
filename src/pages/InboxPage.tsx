@@ -27,7 +27,7 @@ export function InboxPage() {
         <h1>確認待ち</h1>
         <p className="lead">見積、請求、書類、出張の宿メモです。確認しても、メール送信や宿泊手配はしません。</p>
       </div>
-      <p className="mail-warning">送信は担当者が確認してから。この画面からは送信しません。</p>
+      <p className="mail-warning">メールは各画面の下書きを確認し、送信ボタンを押したときだけ送ります。自動では送りません。</p>
       {error ? <Banner tone="error">{error}</Banner> : null}
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
       {rows.length === 0 ? <Banner>確認待ちはありません。</Banner> : null}
