@@ -41,6 +41,7 @@ export type EstimateListItem = {
   validUntil: string | null;
   status: EstimateStatus;
   total: number;
+  awaitingConfirmation: boolean;
 };
 
 export type EstimateDetail = EstimateListItem & {

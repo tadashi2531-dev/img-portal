@@ -4,10 +4,20 @@ import { Shell } from "./components/Shell.tsx";
 import { HazardStripe } from "./components/ui.tsx";
 import { UnsavedProvider } from "./components/unsaved.tsx";
 import { CustomersPage } from "./pages/CustomersPage.tsx";
+import { DocumentsPage } from "./pages/DocumentsPage.tsx";
 import { EstimateEditorPage } from "./pages/EstimateEditorPage.tsx";
 import { EstimatePrintPage } from "./pages/EstimatePrintPage.tsx";
 import { EstimatesPage } from "./pages/EstimatesPage.tsx";
+import { InboxPage } from "./pages/InboxPage.tsx";
+import { InvoiceEditorPage } from "./pages/InvoiceEditorPage.tsx";
+import { InvoicePrintPage } from "./pages/InvoicePrintPage.tsx";
+import { InvoicesPage } from "./pages/InvoicesPage.tsx";
+import { JobDetailPage } from "./pages/JobDetailPage.tsx";
+import { JobsPage } from "./pages/JobsPage.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
+import { PhotosPage } from "./pages/PhotosPage.tsx";
+import { SalesPage } from "./pages/SalesPage.tsx";
+import { TripsPage } from "./pages/TripsPage.tsx";
 
 function Splash() {
   return (
@@ -38,6 +48,18 @@ function Gate() {
           <Route path="/estimates/:id/print" element={<EstimatePrintPage />} />
           <Route path="/estimates/:id" element={<EstimateEditorPage />} />
           <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
+          <Route path="/trips" element={<TripsPage />} />
+          <Route path="/trips/:id" element={<TripsPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/invoices/:id/print" element={<InvoicePrintPage />} />
+          <Route path="/invoices/:id" element={<InvoiceEditorPage />} />
+          <Route path="/sales" element={<SalesPage />} />
+          <Route path="/photos" element={<PhotosPage />} />
+          <Route path="/photos/:jobId" element={<PhotosPage />} />
+          <Route path="/inbox" element={<InboxPage />} />
           <Route path="*" element={<Navigate to="/estimates" replace />} />
         </Routes>
       </Shell>

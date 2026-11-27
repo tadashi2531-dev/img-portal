@@ -1,19 +1,34 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.tsx";
 import { supabase } from "../lib/supabase.ts";
+import { listInbox } from "../lib/portalApi.ts";
 import { HazardStripe } from "./ui.tsx";
 import { useUnsaved } from "./unsaved.tsx";
 
-const COMING_SOON = ["現場・案件", "出張・準備", "契約・書類", "請求発行", "売上・粗利"];
+const NAV = [
+  { path: "/estimates", label: "見積" },
+  { path: "/jobs", label: "現場" },
+  { path: "/trips", label: "出張" },
+  { path: "/documents", label: "書類" },
+  { path: "/invoices", label: "請求" },
+  { path: "/sales", label: "売上" },
+  { path: "/photos", label: "写真" },
+  { path: "/customers", label: "得意先" },
+];
 
 export function Shell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
   const { dirty } = useUnsaved();
-  const estimatesActive = location.pathname.startsWith("/estimates");
-  const customersActive = location.pathname.startsWith("/customers");
+  const [pending, setPending] = useState(0);
+
+  useEffect(() => {
+    void listInbox()
+      .then((rows) => setPending(rows.length))
+      .catch(() => setPending(0));
+  }, [location.pathname]);
 
   function go(path: string) {
     if (location.pathname === path) return;
@@ -36,6 +51,9 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="brand-sub">社内ポータル · 塗装・防水</div>
           </div>
           <div className="brand-actions">
+            <button type="button" className={pending > 0 ? "logout" : "inbox-quiet"} onClick={() => go("/inbox")}>
+              確認待ち {pending}
+            </button>
             {session?.user.email ? <span className="who">{session.user.email}</span> : null}
             <button type="button" className="logout" onClick={() => void logout()}>
               ログアウト
@@ -44,16 +62,14 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         <HazardStripe />
         <nav className="nav" aria-label="業務メニュー">
-          <button type="button" className={estimatesActive ? "nav-btn active" : "nav-btn"} onClick={() => go("/estimates")}>
-            見積
-          </button>
-          <button type="button" className={customersActive ? "nav-btn active" : "nav-btn"} onClick={() => go("/customers")}>
-            得意先
-          </button>
-          {COMING_SOON.map((label) => (
-            <button key={label} type="button" className="nav-btn" disabled title="準備中です">
-              {label}
-              <span className="soon">準備中</span>
+          {NAV.map((item) => (
+            <button
+              key={item.path}
+              type="button"
+              className={location.pathname.startsWith(item.path) ? "nav-btn active" : "nav-btn"}
+              onClick={() => go(item.path)}
+            >
+              {item.label}
             </button>
           ))}
         </nav>

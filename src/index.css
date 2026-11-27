@@ -169,7 +169,7 @@ a { color: var(--yellow); }
 .btn.danger { background: transparent; color: var(--danger); border-color: #ef4444; }
 
 .filters, .grid-2 { display: grid; gap: 12px; }
-.segment { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.segment { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
 .segment button { background: transparent; color: var(--yellow); border-color: var(--yellow); }
 .segment button.on { background: var(--yellow); color: var(--black); }
 
@@ -281,6 +281,41 @@ a { color: var(--yellow); }
 .doc-notes h2 { font-size: 0.95rem; }
 .doc-notes p { white-space: pre-wrap; margin-top: 4px; }
 .issuer { margin-top: 24px; display: flex; flex-direction: column; align-items: flex-end; font-size: 1.05rem; }
+
+.inbox-quiet {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--black);
+  border-radius: 999px;
+  min-height: 44px;
+  font-weight: 800;
+  padding: 8px 12px;
+}
+.fiction {
+  margin: 0 0 6px;
+  color: var(--black);
+  background: var(--yellow);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.sheet .fiction, .card .fiction { color: var(--black); }
+.danger-text { color: var(--danger); }
+.track { height: 10px; background: #111; border-radius: 99px; overflow: hidden; border: 1px solid var(--yellow); }
+.track div { height: 100%; background: var(--yellow); }
+.check-row { display: flex; gap: 8px; align-items: center; }
+.check-row input[type="checkbox"] { width: 28px; height: 28px; flex: 0 0 auto; }
+.check-row input[type="text"], .check-row input:not([type="checkbox"]) { flex: 1; min-height: 48px; }
+.photo-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.photo-grid figure { margin: 0; background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 8px; }
+.photo-grid img { width: 100%; height: auto; border-radius: 8px; display: block; background: #000; }
+.photo-missing { min-height: 120px; display: grid; place-items: center; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+label.btn { position: relative; }
+@media (min-width: 720px) {
+  .photo-grid { grid-template-columns: 1fr 1fr; }
+}
 
 @media (min-width: 800px) {
   .filters { grid-template-columns: 2fr 1fr; }
