@@ -67,6 +67,7 @@ function mapListItem(row: Raw): EstimateListItem {
     validUntil: text(row.valid_until) || null,
     status,
     total: asNumber(row.total),
+    awaitingConfirmation: row.awaiting_confirmation === true,
   };
 }
 
@@ -122,7 +123,7 @@ export async function listEstimates(): Promise<EstimateListItem[]> {
   const { data, error } = await supabase
     .from("estimates")
     .select(
-      "id, estimate_no, customer_id, site_name, title, issue_date, valid_until, status, total, customers(name)",
+      "id, estimate_no, customer_id, site_name, title, issue_date, valid_until, status, total, awaiting_confirmation, customers(name)",
     )
     .order("issue_date", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });

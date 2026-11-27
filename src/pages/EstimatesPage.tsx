@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill.tsx";
 import { Banner } from "../components/ui.tsx";
 import { deleteEstimate, duplicateEstimate, listEstimates } from "../lib/api.ts";
+import { createInvoiceFromEstimate, setReview } from "../lib/portalApi.ts";
 import { toMessage } from "../lib/errors.ts";
 import { formatDateJa, formatYen } from "../lib/money.ts";
 import { ESTIMATE_STATUSES, STATUS_LABEL, type EstimateListItem, type EstimateStatus } from "../lib/types.ts";
@@ -148,6 +149,31 @@ export function EstimatesPage() {
             </button>
             <button type="button" className="btn quiet" onClick={() => void duplicate(row)} disabled={busyId === row.id}>
               {busyId === row.id ? "処理中…" : "過去の見積りをベースに下書きを作る"}
+            </button>
+            <button
+              type="button"
+              className="btn quiet"
+              disabled={busyId === row.id}
+              onClick={() =>
+                void createInvoiceFromEstimate(row.id)
+                  .then((invoiceId) => navigate(`/invoices/${invoiceId}`))
+                  .catch((caught: unknown) => setError(toMessage(caught)))
+              }
+            >
+              請求の下書きを作る
+            </button>
+            <button
+              type="button"
+              className="btn quiet"
+              disabled={busyId === row.id}
+              onClick={() =>
+                void setReview("estimates", row.id, !row.awaitingConfirmation)
+                  .then(reload)
+                  .then(() => setNotice(row.awaitingConfirmation ? "確認済みにしました。送信はしていません。" : "確認待ちにしました。送信はしていません。"))
+                  .catch((caught: unknown) => setError(toMessage(caught)))
+              }
+            >
+              {row.awaitingConfirmation ? "確認した（送らない）" : "確認待ちにする"}
             </button>
             <button type="button" className="btn danger" onClick={() => void remove(row)} disabled={busyId === row.id}>
               削除
