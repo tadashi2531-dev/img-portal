@@ -59,6 +59,8 @@
 
 見積明細のマイナス金額は `allow_negative_estimate_item_amounts`（記録上の版 `20261128024056`、ファイル `supabase/migrations/20261128024056_allow_negative_estimate_item_amounts.sql`）です。請求明細と伝票合計のマイナスは `allow_negative_invoice_item_amounts`（記録上の版 `20261128024500`、ファイル `supabase/migrations/20261128024500_allow_negative_invoice_item_amounts.sql`）です。どちらも本番へ再実行しないでください。
 
+会社のメールは `company_settings.emails`（配列）です。`email` 列は先頭と同じで残しています。マイグレーションは `company_settings_emails`（記録上の版 `20261128043556`）と、引数名の衝突を直した `qualify_company_settings_email_args`（記録上の版 `20261128043750`）です。本番へ再実行しないでください。
+
 追加テーブルは `jobs`, `job_days`, `job_costs`, `trips`, `trip_checks`, `documents`, `invoices`, `invoice_items`, `site_photos` です。見積には案件の紐づけと確認待ちの列を足しています。本番のマイグレーション名は `portal_operations`（記録上の版 `20261127115210`）と `mail_booking_weather`（記録上の版 `20261127121118`）です。リポジトリのファイル名は `20261127120000_portal_operations.sql` と `20261127130000_mail_booking_weather.sql` です。本番へ再実行しないでください。
 
 ## 利用者を招待する（Supabase）

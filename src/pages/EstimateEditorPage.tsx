@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill.tsx";
-import { useCompany } from "../components/CompanyContext.tsx";
+import { primaryEmail, useCompany } from "../components/CompanyContext.tsx";
 import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { FieldMic, useVoiceApply } from "../components/VoiceContext.tsx";
 import { Banner, HazardStripe, SelectField, TextArea, TextField } from "../components/ui.tsx";
@@ -301,6 +301,7 @@ export function EstimateEditorPage() {
     notes: form.notes,
     companyName: settings.companyName,
     trade: settings.trade,
+    email: primaryEmail(settings),
     lines: preview.items.map((item) => ({
       itemName: item.itemName,
       spec: item.spec.trim(),

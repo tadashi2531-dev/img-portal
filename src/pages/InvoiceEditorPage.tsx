@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useCompany } from "../components/CompanyContext.tsx";
+import { primaryEmail, useCompany } from "../components/CompanyContext.tsx";
 import { FictionNote } from "../components/FictionNote.tsx";
 import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner } from "../components/ui.tsx";
@@ -100,6 +100,7 @@ export function InvoiceEditorPage() {
     total: preview.totals.total,
     companyName: settings.companyName,
     trade: settings.trade,
+    email: primaryEmail(settings),
   });
 
   async function save() {
