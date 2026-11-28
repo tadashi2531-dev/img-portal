@@ -11,11 +11,14 @@ import { EstimateEditorPage } from "./pages/EstimateEditorPage.tsx";
 import { EstimatePrintPage } from "./pages/EstimatePrintPage.tsx";
 import { EstimatesPage } from "./pages/EstimatesPage.tsx";
 import { InboxPage } from "./pages/InboxPage.tsx";
+import { AiTalkPage } from "./pages/AiTalkPage.tsx";
+import { InquiriesPage } from "./pages/InquiriesPage.tsx";
 import { InvoiceEditorPage } from "./pages/InvoiceEditorPage.tsx";
 import { InvoicePrintPage } from "./pages/InvoicePrintPage.tsx";
 import { InvoicesPage } from "./pages/InvoicesPage.tsx";
 import { JobDetailPage } from "./pages/JobDetailPage.tsx";
 import { JobsPage } from "./pages/JobsPage.tsx";
+import { OrdersPage } from "./pages/OrdersPage.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { PhotosPage } from "./pages/PhotosPage.tsx";
 import { SalesPage } from "./pages/SalesPage.tsx";
@@ -49,13 +52,17 @@ function Gate() {
           <Shell>
             <VoiceBar />
             <Routes>
-          <Route path="/" element={<Navigate to="/estimates" replace />} />
+          <Route path="/" element={<Navigate to="/ai" replace />} />
+          <Route path="/ai" element={<AiTalkPage />} />
+          <Route path="/inquiries" element={<InquiriesPage />} />
+          <Route path="/inquiries/:id" element={<InquiriesPage />} />
           <Route path="/estimates" element={<EstimatesPage />} />
           <Route path="/estimates/new" element={<EstimateEditorPage />} />
           <Route path="/estimates/from-past" element={<EstimateReusePage />} />
           <Route path="/estimates/:id/print" element={<EstimatePrintPage />} />
           <Route path="/estimates/:id" element={<EstimateEditorPage />} />
           <Route path="/customers" element={<CustomersPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/trips" element={<TripsPage />} />

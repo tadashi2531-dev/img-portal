@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill.tsx";
 import { Banner } from "../components/ui.tsx";
 import { deleteEstimate, duplicateEstimate, listEstimates } from "../lib/api.ts";
-import { createInvoiceFromEstimate, setReview } from "../lib/portalApi.ts";
+import { createInvoiceFromEstimate, markEstimateOrdered, setReview } from "../lib/portalApi.ts";
 import { toMessage } from "../lib/errors.ts";
-import { formatDateJa, formatYen } from "../lib/money.ts";
+import { formatDateJa, formatYen, todayISO } from "../lib/money.ts";
 import { ESTIMATE_STATUSES, STATUS_LABEL, type EstimateListItem, type EstimateStatus } from "../lib/types.ts";
 
 export function EstimatesPage() {
@@ -152,6 +152,21 @@ export function EstimatesPage() {
             </button>
             <button type="button" className="btn quiet" onClick={() => void duplicate(row)} disabled={busyId === row.id}>
               {busyId === row.id ? "処理中…" : "過去の見積りをベースに下書きを作る"}
+            </button>
+            <button
+              type="button"
+              className="btn quiet"
+              disabled={busyId === row.id}
+              onClick={() => {
+                setBusyId(row.id);
+                void markEstimateOrdered(row.id, todayISO())
+                  .then(reload)
+                  .then(() => setNotice("受注にしました。メールは送っていません。"))
+                  .catch((caught: unknown) => setError(toMessage(caught)))
+                  .finally(() => setBusyId(""));
+              }}
+            >
+              受注にする
             </button>
             <button
               type="button"
