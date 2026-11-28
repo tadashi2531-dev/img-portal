@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Banner } from "../components/ui.tsx";
-import { COMPANY_NAME, COMPANY_TRADE } from "../lib/config.ts";
+import { useCompany } from "../components/CompanyContext.tsx";
 import { toMessage } from "../lib/errors.ts";
 import { formatDateJa, formatPercentLabel, formatYen } from "../lib/money.ts";
 import { getInvoice } from "../lib/portalApi.ts";
@@ -9,6 +9,7 @@ import type { InvoiceDetail } from "../lib/portalTypes.ts";
 
 export function InvoicePrintPage() {
   const { id = "" } = useParams();
+  const { settings } = useCompany();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [error, setError] = useState("");
@@ -126,8 +127,8 @@ export function InvoicePrintPage() {
           <p>{invoice.notes || "特になし"}</p>
         </section>
         <footer className="issuer">
-          <strong>{COMPANY_NAME}</strong>
-          <span>{COMPANY_TRADE}</span>
+          <strong>{settings.companyName}</strong>
+          <span>{settings.trade}</span>
         </footer>
       </article>
     </div>

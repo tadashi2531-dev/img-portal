@@ -1,4 +1,3 @@
-import { COMPANY_NAME, COMPANY_TRADE } from "./config.ts";
 import { formatDateJa, formatPercentLabel, formatYen } from "./money.ts";
 
 export type EmailLine = {
@@ -23,7 +22,11 @@ export function buildEstimateEmail(input: {
   taxRate: number;
   tax: number;
   total: number;
+  companyName?: string;
+  trade?: string;
 }): { subject: string; body: string } {
+  const companyName = input.companyName || "弊社";
+  const trade = input.trade || "";
   const subjectName = input.title || input.siteName || input.estimateNo;
   const subject = `お見積書のご送付（${subjectName}）`;
   const customer = input.customerName || "ご担当者";
@@ -41,7 +44,7 @@ export function buildEstimateEmail(input: {
   const body = [
     `${customer} 御中`,
     "",
-    "お世話になっております。IMG株式会社です。",
+    `お世話になっております。${companyName}です。`,
     "",
     "下記の通りお見積書をお送りします。ご確認のほどよろしくお願いいたします。",
     "",
@@ -61,8 +64,8 @@ export function buildEstimateEmail(input: {
     "【備考】",
     input.notes.trim() || "特になし",
     "",
-    COMPANY_NAME,
-    COMPANY_TRADE,
+    companyName,
+    trade,
   ].join("\n");
 
   return { subject, body };
@@ -81,7 +84,11 @@ export function buildInvoiceEmail(input: {
   taxRate: number;
   tax: number;
   total: number;
+  companyName?: string;
+  trade?: string;
 }): { subject: string; body: string } {
+  const companyName = input.companyName || "弊社";
+  const trade = input.trade || "";
   const subjectName = input.title || input.siteName || input.invoiceNo;
   const subject = `請求書のご送付（${subjectName}）`;
   const lines = input.lines
@@ -93,7 +100,7 @@ export function buildInvoiceEmail(input: {
   const body = [
     `${input.customerName || "ご担当者"} 御中`,
     "",
-    "お世話になっております。IMG株式会社です。",
+    `お世話になっております。${companyName}です。`,
     "",
     "下記の通り請求書をお送りします。ご確認のほどよろしくお願いいたします。",
     "",
@@ -113,8 +120,8 @@ export function buildInvoiceEmail(input: {
     "【備考】",
     input.notes.trim() || "特になし",
     "",
-    COMPANY_NAME,
-    COMPANY_TRADE,
+    companyName,
+    trade,
   ].join("\n");
   return { subject, body };
 }

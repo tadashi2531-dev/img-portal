@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill.tsx";
+import { useCompany } from "../components/CompanyContext.tsx";
 import { MailSendPanel } from "../components/MailSendPanel.tsx";
+import { FieldMic, useVoiceApply } from "../components/VoiceContext.tsx";
 import { Banner, HazardStripe, SelectField, TextArea, TextField } from "../components/ui.tsx";
 import { renderDocumentPdf } from "../lib/documentPdf.ts";
 import { useUnsaved } from "../components/unsaved.tsx";
@@ -152,6 +154,12 @@ export function EstimateEditorPage() {
   const location = useLocation();
   const state = (location.state ?? null) as LocationState;
   const { setDirty } = useUnsaved();
+  const { settings } = useCompany();
+  useVoiceApply(({ transcript, intent }) => {
+    if (intent.kind === "estimate" && intent.keyword) patch({ title: intent.keyword });
+    else if (intent.kind === "text" && transcript) patch({ notes: transcript });
+    setNotice("聞き取りを欄に入れました。保存はしていません。");
+  });
   const mailRef = useRef<HTMLDivElement>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [form, setForm] = useState<EstimateForm>(() => emptyForm());
@@ -277,6 +285,8 @@ export function EstimateEditorPage() {
     issueDate: form.issueDate || null,
     validUntil: form.validUntil || null,
     notes: form.notes,
+    companyName: settings.companyName,
+    trade: settings.trade,
     lines: preview.items.map((item) => ({
       itemName: item.itemName,
       spec: item.spec.trim(),
@@ -440,7 +450,9 @@ export function EstimateEditorPage() {
           <TextField label="発行日" type="date" value={form.issueDate} onChange={(issueDate) => patch({ issueDate })} />
           <TextField label="有効期限" type="date" value={form.validUntil} onChange={(validUntil) => patch({ validUntil })} />
           <TextField label="現場名" value={form.siteName} onChange={(siteName) => patch({ siteName })} />
+          <FieldMic onApply={(siteName) => patch({ siteName })} />
           <TextField label="件名" value={form.title} onChange={(title) => patch({ title })} />
+          <FieldMic onApply={(title) => patch({ title })} />
         </div>
         <div className="segment" role="group" aria-label="得意先の選び方">
           <button type="button" className={!form.createCustomer ? "on" : ""} onClick={() => patch({ createCustomer: false })}>
@@ -480,6 +492,7 @@ export function EstimateEditorPage() {
           </SelectField>
         )}
         <TextArea label="備考" value={form.notes} onChange={(notes) => patch({ notes })} />
+        <FieldMic onApply={(notes) => patch({ notes })} />
       </section>
 
       <section className="card stack">
@@ -629,6 +642,7 @@ export function EstimateEditorPage() {
                 tax: formatYen(preview.totals.tax),
                 total: formatYen(preview.totals.total),
                 notes: form.notes,
+                issuer: `${settings.companyName}　${settings.trade}`,
               }).then((bytes) => ({ filename: `${form.estimateNo || "estimate"}.pdf`, bytes }))
             }
           />

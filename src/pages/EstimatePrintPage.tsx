@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Banner } from "../components/ui.tsx";
 import { getEstimate } from "../lib/api.ts";
-import { COMPANY_NAME, COMPANY_TRADE } from "../lib/config.ts";
+import { useCompany } from "../components/CompanyContext.tsx";
 import { toMessage } from "../lib/errors.ts";
 import { formatDateJa, formatPercentLabel, formatYen } from "../lib/money.ts";
 import type { EstimateDetail } from "../lib/types.ts";
 
 export function EstimatePrintPage() {
   const { id } = useParams();
+  const { settings } = useCompany();
   const navigate = useNavigate();
   const [estimate, setEstimate] = useState<EstimateDetail | null>(null);
   const [error, setError] = useState("");
@@ -146,8 +147,8 @@ export function EstimatePrintPage() {
           <p>{estimate.notes || "特になし"}</p>
         </section>
         <footer className="issuer">
-          <strong>{COMPANY_NAME}</strong>
-          <span>{COMPANY_TRADE}</span>
+          <strong>{settings.companyName}</strong>
+          <span>{settings.trade}</span>
         </footer>
       </article>
     </div>

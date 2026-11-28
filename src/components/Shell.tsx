@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.tsx";
+import { useCompany } from "./CompanyContext.tsx";
 import { supabase } from "../lib/supabase.ts";
 import { listInbox } from "../lib/portalApi.ts";
 import { HazardStripe } from "./ui.tsx";
@@ -21,6 +22,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const { settings } = useCompany();
   const { dirty } = useUnsaved();
   const [pending, setPending] = useState(0);
 
@@ -47,14 +49,17 @@ export function Shell({ children }: { children: ReactNode }) {
         <HazardStripe />
         <div className="brand-bar">
           <div className="brand-copy">
-            <div className="brand-mark">IMG株式会社</div>
-            <div className="brand-sub">社内ポータル · 塗装・防水</div>
+            <div className="brand-mark">{settings.companyName || "社内ポータル"}</div>
+            <div className="brand-sub">{settings.trade || "社内ポータル"}</div>
           </div>
           <div className="brand-actions">
             <button type="button" className={pending > 0 ? "logout" : "inbox-quiet"} onClick={() => go("/inbox")}>
               確認待ち {pending}
             </button>
             {session?.user.email ? <span className="who">{session.user.email}</span> : null}
+            <button type="button" className="inbox-quiet" onClick={() => go("/settings")}>
+              会社設定
+            </button>
             <button type="button" className="logout" onClick={() => void logout()}>
               ログアウト
             </button>
