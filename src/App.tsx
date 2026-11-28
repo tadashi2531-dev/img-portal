@@ -1,6 +1,8 @@
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext.tsx";
+import { CompanyProvider } from "./components/CompanyContext.tsx";
 import { Shell } from "./components/Shell.tsx";
+import { VoiceBar, VoiceProvider } from "./components/VoiceContext.tsx";
 import { HazardStripe } from "./components/ui.tsx";
 import { UnsavedProvider } from "./components/unsaved.tsx";
 import { CustomersPage } from "./pages/CustomersPage.tsx";
@@ -17,7 +19,9 @@ import { JobsPage } from "./pages/JobsPage.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { PhotosPage } from "./pages/PhotosPage.tsx";
 import { SalesPage } from "./pages/SalesPage.tsx";
+import { SettingsPage } from "./pages/SettingsPage.tsx";
 import { TripsPage } from "./pages/TripsPage.tsx";
+import { EstimateReusePage } from "./pages/EstimateReusePage.tsx";
 
 function Splash() {
   return (
@@ -25,7 +29,7 @@ function Splash() {
       <HazardStripe />
       <div className="brand-bar">
         <div>
-          <div className="brand-mark">IMG株式会社</div>
+          <div className="brand-mark">社内ポータル</div>
           <div className="brand-sub">読み込み中…</div>
         </div>
       </div>
@@ -39,12 +43,16 @@ function Gate() {
   if (loading) return <Splash />;
   if (!session) return <LoginPage />;
   return (
-    <UnsavedProvider>
-      <Shell>
-        <Routes>
+    <CompanyProvider>
+      <VoiceProvider>
+        <UnsavedProvider>
+          <Shell>
+            <VoiceBar />
+            <Routes>
           <Route path="/" element={<Navigate to="/estimates" replace />} />
           <Route path="/estimates" element={<EstimatesPage />} />
           <Route path="/estimates/new" element={<EstimateEditorPage />} />
+          <Route path="/estimates/from-past" element={<EstimateReusePage />} />
           <Route path="/estimates/:id/print" element={<EstimatePrintPage />} />
           <Route path="/estimates/:id" element={<EstimateEditorPage />} />
           <Route path="/customers" element={<CustomersPage />} />
@@ -60,10 +68,13 @@ function Gate() {
           <Route path="/photos" element={<PhotosPage />} />
           <Route path="/photos/:jobId" element={<PhotosPage />} />
           <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/estimates" replace />} />
-        </Routes>
-      </Shell>
-    </UnsavedProvider>
+            </Routes>
+          </Shell>
+        </UnsavedProvider>
+      </VoiceProvider>
+    </CompanyProvider>
   );
 }
 

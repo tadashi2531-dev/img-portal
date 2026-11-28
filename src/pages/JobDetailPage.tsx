@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FictionNote } from "../components/FictionNote.tsx";
+import { useVoiceApply } from "../components/VoiceContext.tsx";
 import { Banner } from "../components/ui.tsx";
 import { listCustomers } from "../lib/api.ts";
 import { toMessage } from "../lib/errors.ts";
@@ -73,6 +74,19 @@ export function JobDetailPage() {
       cancel = true;
     };
   }, [job?.id, job?.address, job?.latitude, job?.longitude]);
+
+  useVoiceApply(({ intent, transcript }) => {
+    if (!job) return;
+    if (intent.kind === "job_day") {
+      patch({
+        days: [...job.days, { key: crypto.randomUUID(), workDate: intent.date, workContent: intent.content, paint: "", assignee: "", hours: "0" }],
+      });
+      setNotice("聞き取りを工程の行に入れました。保存ボタンを押すまで記録されません。");
+      return;
+    }
+    patch({ notes: transcript });
+    setNotice("聞き取りをメモに入れました。保存はしていません。");
+  });
 
   if (!job) return error ? <Banner tone="error">{error}</Banner> : <p className="fine">読み込み中…</p>;
 

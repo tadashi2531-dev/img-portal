@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from "react";
-import { COMPANY_NAME } from "../lib/config.ts";
 import { loginErrorMessage } from "../lib/errors.ts";
 import { supabase } from "../lib/supabase.ts";
 import { HazardStripe } from "../components/ui.tsx";
@@ -29,15 +28,15 @@ export function LoginPage() {
       <HazardStripe />
       <div className="brand-bar">
         <div>
-          <div className="brand-mark">IMG株式会社</div>
-          <div className="brand-sub">社内ポータル · 塗装・防水</div>
+          <div className="brand-mark">社内ポータル</div>
+          <div className="brand-sub">ログイン後に会社名を表示します</div>
         </div>
       </div>
       <HazardStripe />
       <main className="login-main">
         <h1>ログイン</h1>
         <p className="lead">
-          {COMPANY_NAME}の見積を扱う社内画面です。アカウントは管理者からの招待制です。この画面から新規登録はできません。
+          社内の見積と現場を扱う画面です。アカウントは管理者からの招待制です。この画面から新規登録はできません。
         </p>
         <form className="stack" onSubmit={(event) => void onSubmit(event)}>
           {error ? (

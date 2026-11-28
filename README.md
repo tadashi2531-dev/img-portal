@@ -49,6 +49,12 @@
 
 確認待ちの画面から「架空の見本を入れる」と、名前が「架空）」で始まる見本を入れられます。実在の顧客ではありません。
 
+過去の見積は「過去の見積から作る」でキーワード検索し、宛先を指定して下書きに複製します。マイクは Web Speech API（日本語）です。対応していないブラウザでは使えません。聞いた内容は、反映ボタンを押したときだけ欄に入り、自動では保存しません。
+
+会社名や住所は `company_settings` にあります。Grok Bot の操作は `docs/grok-bot.md` です。
+
+追加のマイグレーションは `voice_reuse_and_bot_rpc`（記録上の版 `20261128021109`、ファイル `supabase/migrations/20261128100000_voice_reuse_and_bot_rpc.sql`）です。本番へ再実行しないでください。
+
 追加テーブルは `jobs`, `job_days`, `job_costs`, `trips`, `trip_checks`, `documents`, `invoices`, `invoice_items`, `site_photos` です。見積には案件の紐づけと確認待ちの列を足しています。本番のマイグレーション名は `portal_operations`（記録上の版 `20261127115210`）と `mail_booking_weather`（記録上の版 `20261127121118`）です。リポジトリのファイル名は `20261127120000_portal_operations.sql` と `20261127130000_mail_booking_weather.sql` です。本番へ再実行しないでください。
 
 ## 利用者を招待する（Supabase）

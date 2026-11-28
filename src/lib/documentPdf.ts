@@ -12,6 +12,7 @@ export type PdfDocument = {
   tax: string;
   total: string;
   notes: string;
+  issuer?: string;
 };
 
 export async function renderDocumentPdf(input: PdfDocument): Promise<Uint8Array> {
@@ -38,7 +39,7 @@ export async function renderDocumentPdf(input: PdfDocument): Promise<Uint8Array>
     `件名：${input.title || "未設定"}`,
     `現場名：${input.site || "未設定"}`,
     `${input.dateLabel}：${input.date}`,
-    "IMG株式会社　塗装・防水工事",
+    input.issuer || "",
   ];
   for (const row of rows) {
     context.fillText(row, 48, y);

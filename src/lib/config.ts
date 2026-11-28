@@ -5,6 +5,3 @@ const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 export const supabasePublishableKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
-
-export const COMPANY_NAME = "IMG株式会社";
-export const COMPANY_TRADE = "塗装・防水工事";

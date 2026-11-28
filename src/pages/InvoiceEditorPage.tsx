@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCompany } from "../components/CompanyContext.tsx";
 import { FictionNote } from "../components/FictionNote.tsx";
 import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner } from "../components/ui.tsx";
@@ -15,6 +16,7 @@ import { UNIT_SUGGESTIONS, type Customer } from "../lib/types.ts";
 export function InvoiceEditorPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { settings } = useCompany();
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [jobs, setJobs] = useState<{ id: string; title: string }[]>([]);
@@ -84,6 +86,8 @@ export function InvoiceEditorPage() {
     taxRate: preview.percent == null ? invoice.taxRate : percentToRate(preview.percent),
     tax: preview.totals.tax,
     total: preview.totals.total,
+    companyName: settings.companyName,
+    trade: settings.trade,
   });
 
   async function save() {
@@ -316,6 +320,7 @@ export function InvoiceEditorPage() {
                 tax: formatYen(preview.totals.tax),
                 total: formatYen(preview.totals.total),
                 notes: invoice.notes,
+                issuer: `${settings.companyName}　${settings.trade}`,
               }).then((bytes) => ({ filename: `${invoice.invoiceNo || "invoice"}.pdf`, bytes }))
             }
           />

@@ -82,7 +82,10 @@ export function EstimatesPage() {
             過去の見積りをベースに下書きを作り、品名・数量・単価は手で直せます。メールは下書きを確認し、送信ボタンを押したときだけ送ります。
           </p>
         </div>
-        <button type="button" className="btn" onClick={() => navigate("/estimates/new")}>
+        <button type="button" className="btn" onClick={() => navigate("/estimates/from-past")}>
+          過去の見積から作る
+        </button>
+        <button type="button" className="btn quiet" onClick={() => navigate("/estimates/new")}>
           新規作成
         </button>
       </div>
