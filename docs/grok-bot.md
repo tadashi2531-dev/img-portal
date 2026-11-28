@@ -33,14 +33,14 @@
 | --- | --- |
 | customers | 得意先 |
 | estimates | 見積。`source_estimate_id` は複製元 |
-| estimate_items | 見積明細 |
+| estimate_items | 見積明細。単価と金額は値引き・端数調整のためマイナス可。数量は 0 以上 |
 | jobs | 現場・案件。緯度経度は天気用 |
 | job_days | 日別工程（作業内容、塗料、担当、時間） |
 | job_costs | 原価 |
 | trips | 出張。宿の予約番号などは人が記録 |
 | trip_checks | 持ち物 |
 | documents | 契約・書類。ファイルは Storage `documents` |
-| invoices / invoice_items | 請求 |
+| invoices / invoice_items | 請求。明細の単価と金額はマイナス可。小計・消費税・合計はマイナス行を含めて計算する |
 | site_photos | 現場写真の行。ファイルは Storage `site-photos` |
 | outbound_messages | メール履歴。`draft` は未送信。`sent` は人が送信した記録 |
 | company_settings | 会社情報 |
@@ -54,11 +54,11 @@
 | 関数 | 動き |
 | --- | --- |
 | find_similar_estimates(query) | 件名・現場名・顧客名・品目名で過去見積を近い順に返す |
-| clone_estimate(source_id, customer_name) | 見積と明細を下書きで複製。宛先、今日の発行日、30日後の有効期限に差し替える |
+| clone_estimate(source_id, customer_name) | 見積と明細を下書きで複製。宛先、今日の発行日、30日後の有効期限に差し替える。値引き行（マイナスの単価・金額）もそのまま写す |
 | ensure_customer(customer_name) | 同名の得意先がなければ作る |
 | create_job(title, site_name, customer_name, start_on, end_on) | 案件を予定で作る |
 | add_job_day(job_id, work_date, work_content, paint, assignee, hours) | 工程を1行追加する |
-| create_invoice_from_estimate(estimate_id) | 請求の下書きを作り、確認待ちにする。送信しない |
+| create_invoice_from_estimate(estimate_id) | 請求の下書きを作り、確認待ちにする。送信しない。見積の値引き行もそのまま写す |
 | create_trip(title, job_id, depart_on, return_on, site_address, party_size) | 出張を確認待ちで作る。予約しない |
 | create_document(title, doc_kind, customer_name, job_id, due_on) | 書類を確認待ちで作る |
 | add_pending_check(kind, ref_id) | 見積・請求・書類・出張を確認待ちにする。kind は estimate / invoice / document / trip |

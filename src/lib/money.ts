@@ -16,7 +16,13 @@ export function rateToPercentInput(rate: number): string {
 }
 
 export function formatYen(value: number): string {
-  return `${Math.round(value).toLocaleString("ja-JP")}円`;
+  const rounded = Math.round(value);
+  const digits = Math.abs(rounded).toLocaleString("ja-JP");
+  return rounded < 0 ? `△${digits}円` : `${digits}円`;
+}
+
+export function isDiscount(value: number): boolean {
+  return Math.round(value) < 0;
 }
 
 export function formatPercentLabel(rate: number): string {
@@ -25,10 +31,12 @@ export function formatPercentLabel(rate: number): string {
 }
 
 export function parseDecimal(value: string): number | null {
-  const trimmed = value.trim().replace(/,/g, "");
+  const trimmed = value.trim().replace(/,/g, "").replace(/\s/g, "");
   if (trimmed === "") return 0;
-  if (!/^\d+(\.\d+)?$/.test(trimmed)) return null;
-  const parsed = Number(trimmed);
+  const normalized = trimmed.replace(/^[−－ー―-]/, "-");
+  if (normalized === "-") return null;
+  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
 }
 

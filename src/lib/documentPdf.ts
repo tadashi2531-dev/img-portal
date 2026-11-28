@@ -52,16 +52,21 @@ export async function renderDocumentPdf(input: PdfDocument): Promise<Uint8Array>
   context.font = "16px sans-serif";
   for (const line of input.lines) {
     const text = `${line.name} ${line.spec}  ${line.qty}${line.unit}  ${line.price}  ${line.amount}`;
+    context.fillStyle = isNegativeMoney(line.amount) || isNegativeMoney(line.price) ? "#b91c1c" : "#111111";
     context.fillText(text.slice(0, 70), 48, y);
     y += lineHeight;
   }
   y += 16;
   context.font = "bold 18px sans-serif";
+  context.fillStyle = isNegativeMoney(input.subtotal) ? "#b91c1c" : "#111111";
   context.fillText(`小計 ${input.subtotal}`, 48, y);
   y += 30;
+  context.fillStyle = isNegativeMoney(input.tax) ? "#b91c1c" : "#111111";
   context.fillText(`消費税 ${input.tax}`, 48, y);
   y += 30;
+  context.fillStyle = isNegativeMoney(input.total) ? "#b91c1c" : "#111111";
   context.fillText(`合計 ${input.total}`, 48, y);
+  context.fillStyle = "#111111";
   y += 40;
   context.font = "16px sans-serif";
   context.fillText(`備考：${(input.notes || "特になし").slice(0, 80)}`, 48, y);
@@ -78,6 +83,10 @@ export function bytesToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...bytes.subarray(index, index + size));
   }
   return btoa(binary);
+}
+
+function isNegativeMoney(value: string): boolean {
+  return value.startsWith("△") || value.startsWith("-") || value.startsWith("−");
 }
 
 function jpegToPdf(jpeg: Uint8Array, pixelWidth: number, pixelHeight: number): Uint8Array {
