@@ -320,6 +320,20 @@ a.btn { text-decoration: none; }
 .chart { width: 100%; height: auto; background: #111; border-radius: 12px; }
 .weather-alert { margin: 0; color: #111; background: #facc15; border-radius: 8px; padding: 8px 10px; font-weight: 800; }
 .voice-bar { margin-bottom: 12px; padding: 12px; border: 1px solid var(--yellow); border-radius: 12px; background: #1c1c1c; }
+.ai-talk { align-items: center; text-align: center; }
+.mic-hero {
+  width: min(220px, 70vw);
+  height: min(220px, 70vw);
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--black);
+  border: 6px solid var(--black);
+  font-size: 1.6rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 4px var(--yellow);
+}
+.ai-talk .field, .ai-talk .btn { width: 100%; text-align: left; }
+.ai-talk .btn { text-align: center; }
 .field-mic { display: flex; flex-direction: column; gap: 6px; }
 label.btn { position: relative; }
 @media (min-width: 720px) {

@@ -112,21 +112,18 @@ export function JobDetailPage() {
   return (
     <div className="stack">
       <button className="btn quiet" type="button" onClick={() => navigate("/jobs")}>
-        案件一覧へ
+        一覧へ
       </button>
-      <FictionNote text={job.title} />
-      <h1>現場・案件</h1>
+      <FictionNote text={job.siteName || job.title} />
+      <h1>工程・現場管理</h1>
+      <h2>{job.siteName || "現場名未設定"}</h2>
       {error ? <Banner tone="error">{error}</Banner> : null}
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
       <section className="card stack">
-        <label className="field">
-          <span>案件名 *</span>
-          <input value={job.title} onChange={(event) => patch({ title: event.target.value })} />
-        </label>
         <div className="grid-2">
           <label className="field">
-            <span>現場名</span>
-            <input value={job.siteName} onChange={(event) => patch({ siteName: event.target.value })} />
+            <span>現場名 *</span>
+            <input value={job.siteName} required onChange={(event) => patch({ siteName: event.target.value, title: event.target.value })} />
           </label>
           <label className="field">
             <span>住所</span>

@@ -60,7 +60,7 @@ export function PhotosPage() {
       {error ? <Banner tone="error">{error}</Banner> : null}
       {notice ? <Banner tone="ok">{notice}</Banner> : null}
       <label className="field">
-        <span>案件</span>
+        <span>現場</span>
         <select value={jobId ?? ""} onChange={(event) => navigate(event.target.value ? `/photos/${event.target.value}` : "/photos")}>
           <option value="">選択</option>
           {jobs.map((item) => (

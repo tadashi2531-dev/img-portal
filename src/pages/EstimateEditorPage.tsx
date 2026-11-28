@@ -8,6 +8,7 @@ import { Banner, HazardStripe, SelectField, TextArea, TextField } from "../compo
 import { renderDocumentPdf } from "../lib/documentPdf.ts";
 import { useUnsaved } from "../components/unsaved.tsx";
 import { duplicateEstimate, getEstimate, listCustomers, saveEstimate, suggestEstimateNo, type EstimateLineInput } from "../lib/api.ts";
+import { markEstimateOrdered } from "../lib/portalApi.ts";
 import { buildEstimateEmail } from "../lib/emailDraft.ts";
 import { toMessage } from "../lib/errors.ts";
 import {
@@ -182,6 +183,7 @@ export function EstimateEditorPage() {
   const [notice, setNotice] = useState("");
   const [showMail, setShowMail] = useState(false);
   const [copied, setCopied] = useState("");
+  const [orderedOn, setOrderedOn] = useState(todayISO);
 
   const dirty = baseline !== "" && JSON.stringify(form) !== baseline;
 
@@ -378,6 +380,22 @@ export function EstimateEditorPage() {
     await persist();
   }
 
+  async function markOrdered() {
+    const savedId = dirty || !id ? await persist() : id;
+    if (!savedId) return;
+    setSaving(true);
+    setError("");
+    try {
+      await markEstimateOrdered(savedId, orderedOn || todayISO());
+      patch({ status: "accepted" });
+      setNotice("受注にしました。受注一覧に入ります。メールは送っていません。");
+    } catch (caught) {
+      setError(toMessage(caught));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function printQuote() {
     const savedId = dirty || !id ? await persist() : id;
     if (!savedId) return;
@@ -450,6 +468,13 @@ export function EstimateEditorPage() {
             <span>番号の提案</span>
             <button className="btn quiet" type="button" onClick={() => void suggestNo()}>
               EST-年-連番を入れる
+            </button>
+          </div>
+          <TextField label="受注日" type="date" value={orderedOn} onChange={setOrderedOn} />
+          <div className="field">
+            <span>受注</span>
+            <button className="btn" type="button" disabled={saving} onClick={() => void markOrdered()}>
+              受注にする
             </button>
           </div>
           <SelectField label="状態" value={form.status} onChange={(value) => patch({ status: value as EstimateStatus })}>

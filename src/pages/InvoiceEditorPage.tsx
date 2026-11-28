@@ -180,7 +180,7 @@ export function InvoiceEditorPage() {
             </select>
           </label>
           <label className="field">
-            <span>案件</span>
+            <span>現場</span>
             <select value={invoice.jobId ?? ""} onChange={(event) => patch({ jobId: event.target.value || null })}>
               <option value="">未選択</option>
               {jobs.map((job) => (

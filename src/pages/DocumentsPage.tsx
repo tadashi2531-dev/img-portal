@@ -102,7 +102,7 @@ export function DocumentsPage() {
             </select>
           </label>
           <label className="field">
-            <span>案件</span>
+            <span>現場</span>
             <select value={form.jobId} onChange={(event) => setForm({ ...form, jobId: event.target.value })}>
               <option value="">未選択</option>
               {jobs.map((job) => (

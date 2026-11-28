@@ -13,7 +13,6 @@ export function JobsPage() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listJobs>>>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [title, setTitle] = useState("");
   const [siteName, setSiteName] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [error, setError] = useState("");
@@ -36,7 +35,7 @@ export function JobsPage() {
   async function create() {
     setError("");
     try {
-      const id = await createJob({ title, siteName, customerId: customerId || null });
+      const id = await createJob({ siteName, customerId: customerId || null });
       navigate(`/jobs/${id}`);
     } catch (caught) {
       setError(toMessage(caught));
@@ -46,8 +45,8 @@ export function JobsPage() {
   return (
     <div className="stack">
       <div>
-        <h1>現場・案件</h1>
-        <p className="lead">案件の予定・実行・完了と、日別の工程（作業内容、塗料、担当、時間）を残します。住所から天気を取り、雨と強風は工程に出します。</p>
+        <h1>工程・現場管理</h1>
+        <p className="lead">現場名で現場を区別します。予定・実行・完了と、日別の工程（作業内容、塗料、担当、時間）を残します。住所から天気を取り、雨と強風は工程に出します。</p>
       </div>
       {error ? <Banner tone="error">{error}</Banner> : null}
       <form
@@ -57,14 +56,10 @@ export function JobsPage() {
           void create();
         }}
       >
-        <h2>案件を追加</h2>
+        <h2>現場を追加</h2>
         <label className="field">
-          <span>案件名 *</span>
-          <input value={title} onChange={(event) => setTitle(event.target.value)} required />
-        </label>
-        <label className="field">
-          <span>現場名</span>
-          <input value={siteName} onChange={(event) => setSiteName(event.target.value)} />
+          <span>現場名 *</span>
+          <input value={siteName} onChange={(event) => setSiteName(event.target.value)} required />
         </label>
         <label className="field">
           <span>得意先</span>
@@ -82,16 +77,14 @@ export function JobsPage() {
         </button>
       </form>
       {loading ? <p className="fine">読み込み中…</p> : null}
-      {!loading && rows.length === 0 ? <Banner>案件はまだありません。</Banner> : null}
+      {!loading && rows.length === 0 ? <Banner>現場はまだありません。</Banner> : null}
       {rows.map((row) => (
         <article key={row.id} className="card">
-          <FictionNote text={row.title} />
+          <FictionNote text={row.siteName || row.title} />
           <div className="quote-top">
             <div>
-              <h2>{row.title}</h2>
+              <h2>{row.siteName || row.title || "現場名未設定"}</h2>
               <p className="meta">
-                現場名：{row.siteName || "未設定"}
-                <br />
                 顧客：{row.customerName || "未設定"}
                 <br />
                 {formatDateJa(row.startDate)} 〜 {formatDateJa(row.endDate)}

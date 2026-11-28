@@ -8,8 +8,11 @@ import { HazardStripe } from "./ui.tsx";
 import { useUnsaved } from "./unsaved.tsx";
 
 const NAV = [
+  { path: "/ai", label: "AIに話す" },
+  { path: "/inquiries", label: "案件" },
   { path: "/estimates", label: "見積" },
-  { path: "/jobs", label: "現場" },
+  { path: "/orders", label: "受注" },
+  { path: "/jobs", label: "工程・現場管理" },
   { path: "/trips", label: "出張" },
   { path: "/documents", label: "書類" },
   { path: "/invoices", label: "請求" },

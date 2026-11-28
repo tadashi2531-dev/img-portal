@@ -1,6 +1,6 @@
-import { getEstimate } from "./api.ts";
+import { getEstimate, saveEstimate, suggestEstimateNo } from "./api.ts";
 import { AppError } from "./errors.ts";
-import { asNumber, lineAmount, normalizeQuantity, percentToRate, summarize, todayISO } from "./money.ts";
+import { addDaysISO, asNumber, lineAmount, normalizeQuantity, percentToRate, summarize, todayISO } from "./money.ts";
 import { supabase } from "./supabase.ts";
 import {
   isCostCategory,
@@ -90,17 +90,20 @@ export async function listJobs(): Promise<
     .select("id, title, site_name, address, phase, start_date, end_date, progress, customers(name)")
     .order("start_date", { ascending: false, nullsFirst: false });
   if (error) throw error;
-  return ((data ?? []) as Raw[]).map((row) => ({
+  return ((data ?? []) as Raw[]).map((row) => {
+    const siteName = text(row.site_name) || text(row.title);
+    return {
     id: text(row.id),
-    title: text(row.title),
-    siteName: text(row.site_name),
+    title: siteName,
+    siteName,
     address: text(row.address),
     phase: isJobPhase(row.phase) ? row.phase : "plan",
     startDate: text(row.start_date) || null,
     endDate: text(row.end_date) || null,
     progress: asNumber(row.progress),
     customerName: text(one(row.customers)?.name),
-  }));
+  };
+  });
 }
 
 export async function getJob(id: string): Promise<JobDetail | null> {
@@ -139,8 +142,8 @@ export async function getJob(id: string): Promise<JobDetail | null> {
     id: text(row.id),
     customerId: text(row.customer_id) || null,
     customerName: text(one(row.customers)?.name),
-    title: text(row.title),
-    siteName: text(row.site_name),
+    title: text(row.site_name) || text(row.title),
+    siteName: text(row.site_name) || text(row.title),
     address: text(row.address),
     latitude: optionalNumber(row.latitude),
     longitude: optionalNumber(row.longitude),
@@ -154,15 +157,262 @@ export async function getJob(id: string): Promise<JobDetail | null> {
   };
 }
 
-export async function createJob(input: { title: string; siteName: string; customerId: string | null }): Promise<string> {
-  if (!input.title.trim()) throw new AppError("案件名を入力してください。");
+export async function createJob(input: { title?: string; siteName: string; customerId: string | null }): Promise<string> {
+  const siteName = input.siteName.trim() || input.title?.trim() || "";
+  if (!siteName) throw new AppError("現場名を入力してください。");
   const { data, error } = await supabase
     .from("jobs")
-    .insert({ title: input.title.trim(), site_name: textOrNull(input.siteName), customer_id: input.customerId, phase: "plan" })
+    .insert({ title: siteName, site_name: siteName, customer_id: input.customerId, phase: "plan" })
     .select("id")
     .single();
   if (error) throw error;
   return text((data as Raw).id);
+}
+
+export type OrderRow = {
+  id: string;
+  estimateId: string;
+  estimateNo: string;
+  customerName: string;
+  siteName: string;
+  jobId: string | null;
+  orderedOn: string;
+  amount: number;
+};
+
+export async function listOrders(from: string | null, to: string | null): Promise<OrderRow[]> {
+  const { data, error } = await supabase.rpc("list_orders", { from, to });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    estimateId: text(row.estimate_id),
+    estimateNo: text(row.estimate_no),
+    customerName: text(row.customer_name),
+    siteName: text(row.site_name),
+    jobId: text(row.job_id) || null,
+    orderedOn: text(row.ordered_on),
+    amount: asNumber(row.amount),
+  }));
+}
+
+export async function markEstimateOrdered(estimateId: string, orderedOn: string): Promise<void> {
+  const { error } = await supabase.rpc("mark_estimate_ordered", { estimate_id: estimateId, ordered_on: orderedOn });
+  if (error) throw error;
+}
+
+export async function createJobFromOrder(order: OrderRow): Promise<string> {
+  if (order.jobId) return order.jobId;
+  const { data, error } = await supabase.rpc("create_job", {
+    title: order.siteName,
+    site_name: order.siteName,
+    customer_name: order.customerName,
+    start_on: null,
+    end_on: null,
+  });
+  if (error) throw error;
+  const jobId = text(data);
+  const { error: linkError } = await supabase.from("orders").update({ job_id: jobId }).eq("id", order.id);
+  if (linkError) throw linkError;
+  if (order.estimateId) {
+    await supabase.from("estimates").update({ job_id: jobId }).eq("id", order.estimateId);
+  }
+  return jobId;
+}
+
+export type InquiryRow = {
+  id: string;
+  receivedOn: string;
+  customerId: string | null;
+  customerName: string;
+  siteName: string;
+  details: string;
+  source: string;
+  status: string;
+  notes: string;
+  expenseTotal: number;
+  estimateId: string | null;
+  estimateNo: string;
+};
+
+export type SiteSurvey = { id: string; visitOn: string | null; visitTime: string; attendees: string; notes: string };
+export type InquiryExpense = { id: string; spentOn: string | null; category: string; amount: number; notes: string };
+
+export const INQUIRY_STATUSES = ["受付", "見積中", "受注", "失注", "保留"] as const;
+export const EXPENSE_CATEGORIES = ["交通費", "高速代", "宿泊", "材料サンプル", "人工", "その他"] as const;
+
+export async function listInquiries(status: string | null = null): Promise<InquiryRow[]> {
+  const { data, error } = await supabase.rpc("list_inquiries", { status_filter: status });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    receivedOn: text(row.received_on),
+    customerId: text(row.customer_id) || null,
+    customerName: text(row.customer_name),
+    siteName: text(row.site_name),
+    details: text(row.details),
+    source: text(row.source),
+    status: text(row.status),
+    notes: text(row.notes),
+    expenseTotal: asNumber(row.expense_total),
+    estimateId: text(row.estimate_id) || null,
+    estimateNo: text(row.estimate_no),
+  }));
+}
+
+export async function createInquiry(input: {
+  receivedOn: string;
+  customerName: string;
+  siteName: string;
+  details: string;
+  source: string;
+  notes: string;
+}): Promise<string> {
+  const { data, error } = await supabase.rpc("create_inquiry", {
+    received_on: input.receivedOn || null,
+    customer_name: input.customerName,
+    site_name: input.siteName,
+    details: input.details,
+    source: input.source,
+    notes: input.notes,
+  });
+  if (error) throw error;
+  return text(data);
+}
+
+export async function updateInquiryStatus(inquiryId: string, status: string): Promise<void> {
+  const { error } = await supabase.rpc("update_inquiry_status", { inquiry_id: inquiryId, status });
+  if (error) throw error;
+}
+
+export async function listSiteSurveys(inquiryId: string): Promise<SiteSurvey[]> {
+  const { data, error } = await supabase
+    .from("inquiry_surveys")
+    .select("id, visit_on, visit_time, attendees, notes")
+    .eq("inquiry_id", inquiryId)
+    .order("visit_on", { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    visitOn: text(row.visit_on) || null,
+    visitTime: text(row.visit_time).slice(0, 5),
+    attendees: text(row.attendees),
+    notes: text(row.notes),
+  }));
+}
+
+export async function listInquiryExpenses(inquiryId: string): Promise<InquiryExpense[]> {
+  const { data, error } = await supabase
+    .from("inquiry_expenses")
+    .select("id, spent_on, category, amount, notes")
+    .eq("inquiry_id", inquiryId)
+    .order("spent_on", { ascending: true, nullsFirst: false });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    spentOn: text(row.spent_on) || null,
+    category: text(row.category),
+    amount: asNumber(row.amount),
+    notes: text(row.notes),
+  }));
+}
+
+export async function addSiteSurvey(input: {
+  inquiryId: string;
+  visitOn: string;
+  visitTime: string;
+  attendees: string;
+  notes: string;
+}): Promise<void> {
+  const { error } = await supabase.rpc("add_site_survey", {
+    inquiry_id: input.inquiryId,
+    visit_on: input.visitOn || null,
+    visit_time: input.visitTime || null,
+    attendees: input.attendees,
+    notes: input.notes,
+  });
+  if (error) throw error;
+}
+
+export async function addInquiryExpense(input: {
+  inquiryId: string;
+  spentOn: string;
+  category: string;
+  amount: number;
+  notes: string;
+}): Promise<void> {
+  const { error } = await supabase.rpc("add_inquiry_expense", {
+    inquiry_id: input.inquiryId,
+    spent_on: input.spentOn || null,
+    category: input.category,
+    amount: input.amount,
+    notes: input.notes,
+  });
+  if (error) throw error;
+}
+
+export type AiLink = { section: string; id: string; label: string };
+
+export type AiInboxItem = {
+  id: string;
+  createdAt: string;
+  text: string;
+  status: string;
+  resultSummary: string;
+  resultLinks: AiLink[];
+  processedAt: string | null;
+};
+
+export async function listAiInbox(): Promise<AiInboxItem[]> {
+  const { data, error } = await supabase.from("ai_inbox").select("id, created_at, text, status, result_summary, result_links, processed_at").order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as Raw[]).map((row) => ({
+    id: text(row.id),
+    createdAt: text(row.created_at),
+    text: text(row.text),
+    status: text(row.status),
+    resultSummary: text(row.result_summary),
+    resultLinks: Array.isArray(row.result_links)
+      ? (row.result_links as Raw[]).map((link) => ({
+          section: text(link.section),
+          id: text(link.id),
+          label: text(link.label),
+        }))
+      : [],
+    processedAt: text(row.processed_at) || null,
+  }));
+}
+
+export async function sendAiInbox(textBody: string): Promise<void> {
+  const body = textBody.trim();
+  if (!body) throw new AppError("文章を入力してください。");
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { error } = await supabase.from("ai_inbox").insert({
+    text: body,
+    status: "未処理",
+    created_by: sessionData.session?.user.id ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function createEstimateForInquiry(inquiry: InquiryRow): Promise<string> {
+  const issueDate = todayISO();
+  const id = await saveEstimate({
+    estimateNo: await suggestEstimateNo(),
+    customerId: inquiry.customerId,
+    newCustomer: null,
+    siteName: inquiry.siteName,
+    title: inquiry.siteName,
+    issueDate,
+    validUntil: addDaysISO(issueDate, 30),
+    status: "draft",
+    notes: [inquiry.details, inquiry.notes].filter((line) => line.trim()).join("\n"),
+    taxPercent: 10,
+    lines: [],
+  });
+  const { error } = await supabase.from("estimates").update({ inquiry_id: inquiry.id }).eq("id", id);
+  if (error) throw error;
+  await updateInquiryStatus(inquiry.id, "見積中");
+  return id;
 }
 
 export async function saveJob(input: {
@@ -181,14 +431,15 @@ export async function saveJob(input: {
   days: JobDay[];
   costs: JobCost[];
 }): Promise<void> {
-  if (!input.title.trim()) throw new AppError("案件名を入力してください。");
+  const siteName = input.siteName.trim() || input.title.trim();
+  if (!siteName) throw new AppError("現場名を入力してください。");
   const progress = Math.max(0, Math.min(100, Math.round(input.progress)));
   const { error } = await supabase
     .from("jobs")
     .update({
       customer_id: input.customerId,
-      title: input.title.trim(),
-      site_name: textOrNull(input.siteName),
+      title: siteName,
+      site_name: siteName,
       address: textOrNull(input.address),
       latitude: input.latitude,
       longitude: input.longitude,

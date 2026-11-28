@@ -109,7 +109,7 @@ function TripEditor({ id }: { id: string }) {
           <input value={trip.title} onChange={(event) => patch({ title: event.target.value })} />
         </label>
         <label className="field">
-          <span>案件</span>
+          <span>現場</span>
           <select
             value={trip.jobId ?? ""}
             onChange={(event) => {
