@@ -24,9 +24,11 @@ export function buildEstimateEmail(input: {
   total: number;
   companyName?: string;
   trade?: string;
+  email?: string;
 }): { subject: string; body: string } {
   const companyName = input.companyName || "弊社";
   const trade = input.trade || "";
+  const contact = input.email?.trim() ?? "";
   const subjectName = input.title || input.siteName || input.estimateNo;
   const subject = `お見積書のご送付（${subjectName}）`;
   const customer = input.customerName || "ご担当者";
@@ -66,6 +68,7 @@ export function buildEstimateEmail(input: {
     "",
     companyName,
     trade,
+    ...(contact ? [contact] : []),
   ].join("\n");
 
   return { subject, body };
@@ -86,9 +89,11 @@ export function buildInvoiceEmail(input: {
   total: number;
   companyName?: string;
   trade?: string;
+  email?: string;
 }): { subject: string; body: string } {
   const companyName = input.companyName || "弊社";
   const trade = input.trade || "";
+  const contact = input.email?.trim() ?? "";
   const subjectName = input.title || input.siteName || input.invoiceNo;
   const subject = `請求書のご送付（${subjectName}）`;
   const lines = input.lines
@@ -122,6 +127,7 @@ export function buildInvoiceEmail(input: {
     "",
     companyName,
     trade,
+    ...(contact ? [contact] : []),
   ].join("\n");
   return { subject, body };
 }

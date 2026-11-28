@@ -145,6 +145,19 @@ a { color: var(--yellow); }
 .banner-ok { border-color: #22c55e; color: var(--ok); background: #052e16; }
 
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field-label { color: var(--muted); font-size: 0.85rem; }
+.email-row { display: flex; gap: 8px; align-items: center; }
+.email-row input {
+  flex: 1;
+  min-width: 0;
+  background: #111;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  min-height: 48px;
+  padding: 10px 12px;
+}
+.icon-btn { min-width: 48px; min-height: 48px; padding: 0 12px; font-size: 1.25rem; line-height: 1; }
 .field span, .total-row span { color: var(--muted); font-size: 0.85rem; }
 .req { color: var(--yellow); }
 

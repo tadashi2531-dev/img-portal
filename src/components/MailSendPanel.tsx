@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { primaryEmail, useCompany } from "./CompanyContext.tsx";
 import { Banner } from "./ui.tsx";
 import { bytesToBase64 } from "../lib/documentPdf.ts";
 import { toMessage } from "../lib/errors.ts";
@@ -21,6 +22,8 @@ export function MailSendPanel({
   body: string;
   makeAttachment?: () => Promise<{ filename: string; bytes: Uint8Array } | null>;
 }) {
+  const { settings } = useCompany();
+  const fromEmail = primaryEmail(settings);
   const [to, setTo] = useState("");
   const [history, setHistory] = useState<OutboundMessage[]>([]);
   const [notice, setNotice] = useState("");
@@ -72,6 +75,7 @@ export function MailSendPanel({
   return (
     <div className="stack">
       <p className="mail-warning">下書きを確認してから、送信ボタンを押したときだけ送ります。自動では送りません。</p>
+      <p className="fine">差出人の連絡先（会社設定の先頭）: {fromEmail || "未設定"}</p>
       <label className="field">
         <span>宛先メール</span>
         <input type="email" inputMode="email" value={to} onChange={(event) => setTo(event.target.value)} placeholder="customer@example.com" />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCompany } from "../components/CompanyContext.tsx";
+import { primaryEmail, useCompany } from "../components/CompanyContext.tsx";
 import { FictionNote } from "../components/FictionNote.tsx";
 import { MailSendPanel } from "../components/MailSendPanel.tsx";
 import { Banner } from "../components/ui.tsx";
@@ -122,7 +122,17 @@ export function DocumentsPage() {
             kind="document"
             refId={form.id}
             subject={`書類のご送付（${form.title || "書類"}）`}
-            body={[`${form.title}`, `種類：${form.docKind}`, `期限：${form.dueOn || "未設定"}`, form.notes || "", "", settings.companyName].join("\n")}
+            body={[
+              `${form.title}`,
+              `種類：${form.docKind}`,
+              `期限：${form.dueOn || "未設定"}`,
+              form.notes || "",
+              "",
+              settings.companyName,
+              primaryEmail(settings),
+            ]
+              .filter((line, index, lines) => index < lines.length - 1 || line !== "")
+              .join("\n")}
           />
         ) : (
           <p className="fine">保存した書類から、下書きを確認して送信できます。</p>

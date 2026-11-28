@@ -8,7 +8,7 @@
 - 宿の予約、外部へのファイル送信、天候以外の外部書き込みはしません。天気の取得は画面が Open-Meteo を読むだけで、Bot は予定の行を作るところまでです。
 - 削除は、人に確認してからポータルの削除ボタンで行います。削除用の RPC はありません。
 - 作成系の関数は、下書き（`draft`）か確認待ち（`awaiting_confirmation = true`）で作ります。
-- 会社名、住所、電話、業種は `company_settings` から読みます。会話やコードに他社の情報を書き込まないでください。
+- 会社名、住所、電話、業種、メールは `company_settings` から読みます。会話やコードに他社の情報を書き込まないでください。
 
 ## 会社設定
 
@@ -20,10 +20,14 @@
 | trade | 業種（例: 塗装・防水工事） |
 | address | 住所 |
 | phone | 電話 |
-| email | メール |
+| email | 互換用。`emails` の先頭と同じ |
+| emails | メールアドレスの配列。先頭（`emails[1]`）を見積・請求・書類メールの差出人の連絡先にする |
 
-- `get_company_settings()` で読む
-- `set_company_settings(company_name, trade, address, phone, email)` で更新する
+- `get_company_settings()` で読む。戻り値に `emails` が入る
+- `set_company_settings(company_name, trade, address, phone, email, emails)` で更新する
+  - `emails` を渡すとその配列を保存し、`email` は先頭になる
+  - `emails` を省略して `email` だけ渡すと、そのアドレスを先頭に差し替える
+  - 空の要素は捨てる。形式が違うアドレスは保存しない
 
 ## テーブル
 
@@ -66,7 +70,7 @@
 | register_site_photo(job_id, stage, caption, storage_path, taken_on) | 先に Storage へ上げた写真の行を登録する。stage は undercoat / top1 / top2 / finished / other |
 | list_pending_checks() | 確認待ちの一覧 |
 | get_sales_summary() | 案件ごとの売上・原価・粗利。下書き請求は売上に入れない |
-| get_company_settings() / set_company_settings(...) | 会社情報 |
+| get_company_settings() / set_company_settings(...) | 会社情報。メールは `emails` 配列。差出人の連絡先は先頭 |
 | next_estimate_no() / next_invoice_no() | 番号の提案 |
 
 ## 話し言葉と関数
@@ -81,6 +85,7 @@
 | 「見積メールの下書きを残して」 | `draft_outbound_message('estimate', estimate_id, 宛先, 件名, 本文)`。送らない |
 | 「今月の粗利は」 | `get_sales_summary()` |
 | 「会社の住所を変えて」 | 人に内容を確認してから `set_company_settings(...)` |
+| 「会社のメールに info@example.com を足して」 | 今の `emails` を読んで、確認してから `set_company_settings(..., emails)`。先頭は差出人の連絡先のままにする |
 
 候補が複数あるとき、Bot は勝手に1件へ決めず、人に選ばせます。
 
