@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Banner } from "../components/ui.tsx";
 import { useCompany } from "../components/CompanyContext.tsx";
 import { toMessage } from "../lib/errors.ts";
-import { formatDateJa, formatPercentLabel, formatYen } from "../lib/money.ts";
+import { formatDateJa, formatPercentLabel, formatYen, isDiscount, lineAmount } from "../lib/money.ts";
 import { getInvoice } from "../lib/portalApi.ts";
 import type { InvoiceDetail } from "../lib/portalTypes.ts";
 
@@ -69,20 +69,25 @@ export function InvoicePrintPage() {
         </p>
         <p className="doc-total">
           <span>御請求金額（税込）</span>
-          <strong>{formatYen(invoice.total)}</strong>
+          <strong className={isDiscount(invoice.total) ? "discount" : undefined}>{formatYen(invoice.total)}</strong>
         </p>
         <div className="item-cards">
-          {lines.map((line) => (
-            <div key={line.key} className="item-card">
-              <strong>{line.itemName}</strong>
-              <span>{line.spec}</span>
-              <span>
-                {line.quantity}
-                {line.unit} × {formatYen(Number(line.unitPrice) || 0)}
-              </span>
-              <strong>{formatYen((Number(line.quantity) || 0) * (Number(line.unitPrice) || 0))}</strong>
-            </div>
-          ))}
+          {lines.map((line) => {
+            const quantity = Number(line.quantity);
+            const unitPrice = Number(line.unitPrice);
+            const amount = Number.isFinite(quantity) && Number.isFinite(unitPrice) ? lineAmount(quantity, unitPrice) : 0;
+            return (
+              <div key={line.key} className="item-card">
+                <strong>{line.itemName}</strong>
+                <span>{line.spec}</span>
+                <span>
+                  {line.quantity}
+                  {line.unit} × <span className={isDiscount(unitPrice) ? "discount" : undefined}>{formatYen(unitPrice)}</span>
+                </span>
+                <strong className={isDiscount(amount) ? "discount" : undefined}>{formatYen(amount)}</strong>
+              </div>
+            );
+          })}
         </div>
         <table className="print-table">
           <thead>
@@ -96,30 +101,35 @@ export function InvoicePrintPage() {
             </tr>
           </thead>
           <tbody>
-            {lines.map((line) => (
-              <tr key={line.key}>
-                <td>{line.itemName}</td>
-                <td>{line.spec}</td>
-                <td className="num">{line.quantity}</td>
-                <td>{line.unit}</td>
-                <td className="num">{formatYen(Number(line.unitPrice) || 0)}</td>
-                <td className="num">{formatYen(Math.round((Number(line.quantity) || 0) * (Number(line.unitPrice) || 0)))}</td>
-              </tr>
-            ))}
+            {lines.map((line) => {
+              const quantity = Number(line.quantity);
+              const unitPrice = Number(line.unitPrice);
+              const amount = Number.isFinite(quantity) && Number.isFinite(unitPrice) ? lineAmount(quantity, unitPrice) : 0;
+              return (
+                <tr key={line.key}>
+                  <td>{line.itemName}</td>
+                  <td>{line.spec}</td>
+                  <td className="num">{line.quantity}</td>
+                  <td>{line.unit}</td>
+                  <td className={isDiscount(unitPrice) ? "num discount" : "num"}>{formatYen(unitPrice)}</td>
+                  <td className={isDiscount(amount) ? "num discount" : "num"}>{formatYen(amount)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         <div className="doc-sums">
           <div>
             <span>小計</span>
-            <strong>{formatYen(invoice.subtotal)}</strong>
+            <strong className={isDiscount(invoice.subtotal) ? "discount" : undefined}>{formatYen(invoice.subtotal)}</strong>
           </div>
           <div>
             <span>消費税（{formatPercentLabel(invoice.taxRate)}）</span>
-            <strong>{formatYen(invoice.tax)}</strong>
+            <strong className={isDiscount(invoice.tax) ? "discount" : undefined}>{formatYen(invoice.tax)}</strong>
           </div>
           <div className="grand">
             <span>合計（税込）</span>
-            <strong>{formatYen(invoice.total)}</strong>
+            <strong className={isDiscount(invoice.total) ? "discount" : undefined}>{formatYen(invoice.total)}</strong>
           </div>
         </div>
         <section className="doc-notes">

@@ -13,6 +13,7 @@ import { toMessage } from "../lib/errors.ts";
 import {
   addDaysISO,
   formatYen,
+  isDiscount,
   lineAmount,
   parseDecimal,
   parsePercent,
@@ -68,6 +69,17 @@ function blankLine(): LineForm {
     quantity: "1",
     unit: "㎡",
     unitPrice: "0",
+  };
+}
+
+function discountLine(): LineForm {
+  return {
+    key: crypto.randomUUID(),
+    itemName: "値引き",
+    spec: "",
+    quantity: "1",
+    unit: "式",
+    unitPrice: "-",
   };
 }
 
@@ -133,8 +145,8 @@ function collectLines(lines: LineForm[]): { error: string | null; items: Estimat
     if (!itemName) return { error: "品名を入力してください。", items: [] };
     const quantity = parseDecimal(line.quantity);
     const unitPrice = parseYen(line.unitPrice);
-    if (quantity == null || unitPrice == null) {
-      return { error: `「${itemName}」の数量と単価は0以上の数値にしてください。`, items: [] };
+    if (quantity == null || quantity < 0 || unitPrice == null) {
+      return { error: `「${itemName}」の数量は0以上、単価は数値にしてください。値引きは単価をマイナスにします。`, items: [] };
     }
     items.push({
       id: line.id,
@@ -525,12 +537,15 @@ export function EstimateEditorPage() {
                 <TextField
                   label="単価"
                   value={line.unitPrice}
-                  inputMode="numeric"
+                  inputMode="text"
+                  placeholder="値引きは -1000"
                   onChange={(unitPrice) => patchLine(line.key, { unitPrice })}
                 />
                 <div className="field">
                   <span>金額</span>
-                  <strong className="money line-amount">{priced?.amount == null ? "—" : formatYen(priced.amount)}</strong>
+                  <strong className={`money line-amount${priced?.amount != null && isDiscount(priced.amount) ? " discount" : ""}`}>
+                    {priced?.amount == null ? "—" : formatYen(priced.amount)}
+                  </strong>
                 </div>
               </div>
               <div className="row-actions">
@@ -560,15 +575,21 @@ export function EstimateEditorPage() {
             </div>
           );
         })}
-        <button className="btn quiet" type="button" onClick={() => patch({ lines: [...form.lines, blankLine()] })}>
-          行を追加
-        </button>
+        <p className="fine">金額は数量×単価です。値引きと端数調整は、単価をマイナスにしてください。</p>
+        <div className="row-actions">
+          <button className="btn quiet" type="button" onClick={() => patch({ lines: [...form.lines, blankLine()] })}>
+            行を追加
+          </button>
+          <button className="btn quiet" type="button" onClick={() => patch({ lines: [...form.lines, discountLine()] })}>
+            値引き行を追加
+          </button>
+        </div>
       </section>
 
       <section className="card totals">
         <div className="total-row">
           <span>小計</span>
-          <strong className="money">{formatYen(preview.totals.subtotal)}</strong>
+          <strong className={`money${isDiscount(preview.totals.subtotal) ? " discount" : ""}`}>{formatYen(preview.totals.subtotal)}</strong>
         </div>
         <label className="total-row">
           <span>消費税率（%）</span>
@@ -582,11 +603,11 @@ export function EstimateEditorPage() {
         </label>
         <div className="total-row">
           <span>消費税</span>
-          <strong className="money">{formatYen(preview.totals.tax)}</strong>
+          <strong className={`money${isDiscount(preview.totals.tax) ? " discount" : ""}`}>{formatYen(preview.totals.tax)}</strong>
         </div>
         <div className="total-row grand">
           <span>合計（税込）</span>
-          <strong className="money">{formatYen(preview.totals.total)}</strong>
+          <strong className={`money${isDiscount(preview.totals.total) ? " discount" : ""}`}>{formatYen(preview.totals.total)}</strong>
         </div>
       </section>
 

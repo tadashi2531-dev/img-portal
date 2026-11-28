@@ -28,7 +28,7 @@
 - 一覧（現場名・顧客・件名・見積番号で検索。状態は 下書き / 提出済み / 受注 / 失注）
 - 新規作成。見積番号は `EST-2026-001` のように年と連番を提案します
 - 過去の見積りをベースに、新しい下書きを作る
-- 明細（品名、仕様、数量、単位、単価、金額）。単位は候補から選ぶか、そのまま入力できます
+- 明細（品名、仕様、数量、単位、単価、金額）。単位は候補から選ぶか、そのまま入力できます。値引きと端数調整は「値引き行を追加」か、単価のマイナスで入れます。印刷と PDF では △ で出ます
 - 小計、消費税（初期値 10%）、合計を自動計算して保存します
 - 印刷、またはブラウザから PDF 保存
 - 削除（確認あり）
@@ -54,6 +54,8 @@
 会社名や住所は `company_settings` にあります。Grok Bot の操作は `docs/grok-bot.md` です。
 
 追加のマイグレーションは `voice_reuse_and_bot_rpc`（記録上の版 `20261128021109`、ファイル `supabase/migrations/20261128100000_voice_reuse_and_bot_rpc.sql`）です。本番へ再実行しないでください。
+
+見積明細のマイナス金額は `allow_negative_estimate_item_amounts`（記録上の版 `20261128024056`、ファイル `supabase/migrations/20261128024056_allow_negative_estimate_item_amounts.sql`）です。請求明細と伝票合計のマイナスは `allow_negative_invoice_item_amounts`（記録上の版 `20261128024500`、ファイル `supabase/migrations/20261128024500_allow_negative_invoice_item_amounts.sql`）です。どちらも本番へ再実行しないでください。
 
 追加テーブルは `jobs`, `job_days`, `job_costs`, `trips`, `trip_checks`, `documents`, `invoices`, `invoice_items`, `site_photos` です。見積には案件の紐づけと確認待ちの列を足しています。本番のマイグレーション名は `portal_operations`（記録上の版 `20261127115210`）と `mail_booking_weather`（記録上の版 `20261127121118`）です。リポジトリのファイル名は `20261127120000_portal_operations.sql` と `20261127130000_mail_booking_weather.sql` です。本番へ再実行しないでください。
 

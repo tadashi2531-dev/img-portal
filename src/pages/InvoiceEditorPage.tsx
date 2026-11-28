@@ -8,7 +8,7 @@ import { renderDocumentPdf } from "../lib/documentPdf.ts";
 import { listCustomers } from "../lib/api.ts";
 import { buildInvoiceEmail } from "../lib/emailDraft.ts";
 import { toMessage } from "../lib/errors.ts";
-import { formatYen, lineAmount, parseDecimal, parsePercent, parseYen, percentToRate, rateToPercentInput, summarize } from "../lib/money.ts";
+import { formatYen, isDiscount, lineAmount, parseDecimal, parsePercent, parseYen, percentToRate, rateToPercentInput, summarize } from "../lib/money.ts";
 import { getInvoice, listJobs, saveInvoice, setReview } from "../lib/portalApi.ts";
 import { INVOICE_STATUSES, INVOICE_STATUS_LABEL, type InvoiceDetail, type InvoiceLine, type InvoiceStatus } from "../lib/portalTypes.ts";
 import { UNIT_SUGGESTIONS, type Customer } from "../lib/types.ts";
@@ -65,6 +65,18 @@ export function InvoiceEditorPage() {
     patch({ lines: invoice.lines.map((line) => (line.key === key ? { ...line, ...partial } : line)) });
   }
 
+  function addLine(discount: boolean) {
+    if (!invoice) return;
+    patch({
+      lines: [
+        ...invoice.lines,
+        discount
+          ? { key: crypto.randomUUID(), itemName: "値引き", spec: "", quantity: "1", unit: "式", unitPrice: "-" }
+          : { key: crypto.randomUUID(), itemName: "", spec: "", quantity: "1", unit: "㎡", unitPrice: "0" },
+      ],
+    });
+  }
+
   const customerName = customers.find((customer) => customer.id === invoice.customerId)?.name ?? invoice.customerName;
   const mail = buildInvoiceEmail({
     invoiceNo: invoice.invoiceNo,
@@ -94,6 +106,15 @@ export function InvoiceEditorPage() {
     if (!invoice) return;
     if (preview.percent == null) {
       setError("消費税率は0から100までにしてください。");
+      return;
+    }
+    const invalid = invoice.lines.find((line) => {
+      if (!line.itemName.trim()) return false;
+      const quantity = parseDecimal(line.quantity);
+      return quantity == null || quantity < 0 || parseYen(line.unitPrice) == null;
+    });
+    if (invalid) {
+      setError(`「${invalid.itemName.trim()}」の数量は0以上、単価は数値にしてください。値引きは単価をマイナスにします。`);
       return;
     }
     try {
@@ -221,11 +242,18 @@ export function InvoiceEditorPage() {
               </label>
               <label className="field">
                 <span>単価</span>
-                <input inputMode="numeric" value={line.unitPrice} onChange={(event) => patchLine(line.key, { unitPrice: event.target.value })} />
+                <input
+                  inputMode="text"
+                  placeholder="値引きは -1000"
+                  value={line.unitPrice}
+                  onChange={(event) => patchLine(line.key, { unitPrice: event.target.value })}
+                />
               </label>
               <div className="field">
                 <span>金額</span>
-                <strong className="money">{quantity == null || price == null ? "—" : formatYen(lineAmount(quantity, price))}</strong>
+                <strong className={`money${quantity != null && price != null && isDiscount(lineAmount(quantity, price)) ? " discount" : ""}`}>
+                  {quantity == null || price == null ? "—" : formatYen(lineAmount(quantity, price))}
+                </strong>
               </div>
               <button className="btn danger" type="button" onClick={() => patch({ lines: invoice.lines.filter((item) => item.key !== line.key) })}>
                 行を削除
@@ -233,18 +261,20 @@ export function InvoiceEditorPage() {
             </div>
           );
         })}
-        <button
-          className="btn quiet"
-          type="button"
-          onClick={() => patch({ lines: [...invoice.lines, { key: crypto.randomUUID(), itemName: "", spec: "", quantity: "1", unit: "㎡", unitPrice: "0" }] })}
-        >
-          行を追加
-        </button>
+        <p className="fine">金額は数量×単価です。値引きと端数調整は、単価をマイナスにしてください。</p>
+        <div className="row-actions">
+          <button className="btn quiet" type="button" onClick={() => addLine(false)}>
+            行を追加
+          </button>
+          <button className="btn quiet" type="button" onClick={() => addLine(true)}>
+            値引き行を追加
+          </button>
+        </div>
       </section>
       <section className="card totals">
         <div className="total-row">
           <span>小計</span>
-          <strong className="money">{formatYen(preview.totals.subtotal)}</strong>
+          <strong className={`money${isDiscount(preview.totals.subtotal) ? " discount" : ""}`}>{formatYen(preview.totals.subtotal)}</strong>
         </div>
         <label className="total-row">
           <span>消費税率（%）</span>
@@ -252,11 +282,11 @@ export function InvoiceEditorPage() {
         </label>
         <div className="total-row">
           <span>消費税</span>
-          <strong className="money">{formatYen(preview.totals.tax)}</strong>
+          <strong className={`money${isDiscount(preview.totals.tax) ? " discount" : ""}`}>{formatYen(preview.totals.tax)}</strong>
         </div>
         <div className="total-row grand">
           <span>合計（税込）</span>
-          <strong className="money">{formatYen(preview.totals.total)}</strong>
+          <strong className={`money${isDiscount(preview.totals.total) ? " discount" : ""}`}>{formatYen(preview.totals.total)}</strong>
         </div>
       </section>
       <div className="row-actions">

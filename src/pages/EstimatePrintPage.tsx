@@ -4,7 +4,7 @@ import { Banner } from "../components/ui.tsx";
 import { getEstimate } from "../lib/api.ts";
 import { useCompany } from "../components/CompanyContext.tsx";
 import { toMessage } from "../lib/errors.ts";
-import { formatDateJa, formatPercentLabel, formatYen } from "../lib/money.ts";
+import { formatDateJa, formatPercentLabel, formatYen, isDiscount } from "../lib/money.ts";
 import type { EstimateDetail } from "../lib/types.ts";
 
 export function EstimatePrintPage() {
@@ -83,7 +83,7 @@ export function EstimatePrintPage() {
         </p>
         <p className="doc-total">
           <span>御見積金額（税込）</span>
-          <strong>{formatYen(estimate.total)}</strong>
+          <strong className={isDiscount(estimate.total) ? "discount" : undefined}>{formatYen(estimate.total)}</strong>
         </p>
         <div className="item-cards">
           {estimate.items.length === 0 ? <p>明細はありません。</p> : null}
@@ -93,9 +93,9 @@ export function EstimatePrintPage() {
               <span>{item.spec || "仕様なし"}</span>
               <span>
                 {item.quantity}
-                {item.unit} × {formatYen(item.unitPrice)}
+                {item.unit} × <span className={isDiscount(item.unitPrice) ? "discount" : undefined}>{formatYen(item.unitPrice)}</span>
               </span>
-              <strong className="num">{formatYen(item.amount)}</strong>
+              <strong className={isDiscount(item.amount) ? "num discount" : "num"}>{formatYen(item.amount)}</strong>
             </div>
           ))}
         </div>
@@ -117,8 +117,8 @@ export function EstimatePrintPage() {
                 <td>{item.spec}</td>
                 <td className="num">{item.quantity}</td>
                 <td>{item.unit}</td>
-                <td className="num">{formatYen(item.unitPrice)}</td>
-                <td className="num">{formatYen(item.amount)}</td>
+                <td className={isDiscount(item.unitPrice) ? "num discount" : "num"}>{formatYen(item.unitPrice)}</td>
+                <td className={isDiscount(item.amount) ? "num discount" : "num"}>{formatYen(item.amount)}</td>
               </tr>
             ))}
             {estimate.items.length === 0 ? (
@@ -131,15 +131,15 @@ export function EstimatePrintPage() {
         <div className="doc-sums">
           <div>
             <span>小計</span>
-            <strong>{formatYen(estimate.subtotal)}</strong>
+            <strong className={isDiscount(estimate.subtotal) ? "discount" : undefined}>{formatYen(estimate.subtotal)}</strong>
           </div>
           <div>
             <span>消費税（{formatPercentLabel(estimate.taxRate)}）</span>
-            <strong>{formatYen(estimate.tax)}</strong>
+            <strong className={isDiscount(estimate.tax) ? "discount" : undefined}>{formatYen(estimate.tax)}</strong>
           </div>
           <div className="grand">
             <span>合計（税込）</span>
-            <strong>{formatYen(estimate.total)}</strong>
+            <strong className={isDiscount(estimate.total) ? "discount" : undefined}>{formatYen(estimate.total)}</strong>
           </div>
         </div>
         <section className="doc-notes">
